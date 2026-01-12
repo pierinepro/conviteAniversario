@@ -409,19 +409,27 @@ if (exportExcelBtn) {
 
 // Verificar se já está autenticado ao carregar a página
 async function checkAuthState() {
+    // Sempre mostrar modal de login inicialmente
+    if (adminLoginModal) adminLoginModal.style.display = 'flex';
+    if (adminArea) adminArea.style.display = 'none';
+    
     if (isFirebaseConfigured() && window.firebaseAuth) {
         try {
-            const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+            const { onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+            
+            // Verificar se há usuário autenticado e fazer logout para forçar novo login
+            const currentUser = window.firebaseAuth.currentUser;
+            if (currentUser) {
+                // Fazer logout para forçar novo login
+                await signOut(window.firebaseAuth);
+                console.log('Sessão anterior encerrada. Login necessário.');
+            }
             
             onAuthStateChanged(window.firebaseAuth, async (user) => {
                 if (user) {
-                    // Usuário está autenticado
+                    // Usuário autenticado - só mostrar área admin após login explícito via formulário
+                    // Não fazer auto-login aqui
                     console.log('Usuário autenticado:', user.email);
-                    if (adminLoginModal) adminLoginModal.style.display = 'none';
-                    if (adminArea) {
-                        adminArea.style.display = 'block';
-                        await updateAdminStats();
-                    }
                 } else {
                     // Usuário não está autenticado
                     if (adminArea) adminArea.style.display = 'none';
@@ -430,7 +438,14 @@ async function checkAuthState() {
             });
         } catch (error) {
             console.error('Erro ao verificar autenticação:', error);
+            // Em caso de erro, sempre mostrar modal de login
+            if (adminLoginModal) adminLoginModal.style.display = 'flex';
+            if (adminArea) adminArea.style.display = 'none';
         }
+    } else {
+        // Firebase não configurado - sempre mostrar modal de login
+        if (adminLoginModal) adminLoginModal.style.display = 'flex';
+        if (adminArea) adminArea.style.display = 'none';
     }
 }
 
@@ -1375,14 +1390,18 @@ async function loadFieldsConfig() {
             
             if (configDoc.exists()) {
                 const config = configDoc.data();
+                // Se não existir a propriedade, usar padrão true
+                const emailValue = config.enableEmail !== undefined ? config.enableEmail !== false : true;
+                const phoneValue = config.enablePhone !== undefined ? config.enablePhone !== false : true;
+                
                 if (enableEmailField) {
-                    enableEmailField.checked = config.enableEmail !== false; // Padrão: true
+                    enableEmailField.checked = emailValue;
                 }
                 if (enablePhoneField) {
-                    enablePhoneField.checked = config.enablePhone !== false; // Padrão: true
+                    enablePhoneField.checked = phoneValue;
                 }
                 console.log('Configurações de campos carregadas:', config);
-                return config;
+                return { enableEmail: emailValue, enablePhone: phoneValue };
             }
         } catch (error) {
             console.error('Erro ao carregar configurações de campos:', error);
@@ -1393,16 +1412,20 @@ async function loadFieldsConfig() {
     const storedEmail = localStorage.getItem('enableEmailField');
     const storedPhone = localStorage.getItem('enablePhoneField');
     
+    // Se não houver valor salvo, usar padrão true (marcado)
+    const emailValue = storedEmail === null ? true : storedEmail !== 'false';
+    const phoneValue = storedPhone === null ? true : storedPhone !== 'false';
+    
     if (enableEmailField) {
-        enableEmailField.checked = storedEmail !== 'false'; // Padrão: true
+        enableEmailField.checked = emailValue;
     }
     if (enablePhoneField) {
-        enablePhoneField.checked = storedPhone !== 'false'; // Padrão: true
+        enablePhoneField.checked = phoneValue;
     }
     
     return {
-        enableEmail: storedEmail !== 'false',
-        enablePhone: storedPhone !== 'false'
+        enableEmail: emailValue,
+        enablePhone: phoneValue
     };
 }
 
