@@ -1619,19 +1619,22 @@ body {
 
 .config-checkbox-group {
     display: flex !important;
-    flex-direction: column !important;
-    gap: 15px !important;
+    flex-direction: row !important;
+    gap: 30px !important;
     margin-top: 10px !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
 }
 
 .config-checkbox-label {
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 8px !important;
     cursor: pointer !important;
-    padding: 10px !important;
+    padding: 8px 12px !important;
     border-radius: 8px !important;
     transition: background-color 0.3s ease !important;
+    white-space: nowrap !important;
 }
 
 .config-checkbox-label:hover {
@@ -1643,7 +1646,9 @@ body {
     height: 20px !important;
     cursor: pointer !important;
     accent-color: #8b6f47 !important;
-    display: block !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 .config-checkbox-label span {
@@ -1651,7 +1656,8 @@ body {
     font-size: 0.95rem !important;
     color: #333 !important;
     user-select: none !important;
-    display: inline-block !important;
+    display: inline !important;
+    white-space: nowrap !important;
 }
 
 /* Mensagens de configuração */
