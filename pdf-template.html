@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template PDF - Convite de Casamento</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #ffffff;
+            padding: 20px;
+            color: #2c2c2c;
+            margin: 0;
+        }
+
+        /* ===== PDF CONTAINER (A4 proporção) ===== */
+        .pdf-container {
+            width: 800px;
+            height: 1131px;
+            margin: 0 auto;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 60px 40px 60px;
+        }
+
+        /* ===== DECORAÇÃO FLORAL (SIMULADA COM EMOJIS/CSS) ===== */
+        .floral-header {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5rem;
+            opacity: 0.2;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .floral-footer {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 6rem;
+            opacity: 0.2;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* ===== CONTEÚDO ===== */
+        .content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            border: 1px solid rgba(139,111,71,0.1);
+            padding: 5px 40px 40px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .names-section {
+            text-align: center;
+            margin-bottom: 25px;
+            margin-top: 0;
+        }
+
+        .couple-names {
+            font-family: 'Dancing Script', cursive;
+            font-size: 5rem;
+            color: #d4a574;
+            line-height: 1.1;
+        }
+
+        .connector {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: #d4a574;
+            margin: 10px 0;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: #8b6f47;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+
+        /* ===== DATA SECTION (LAYOUT IGUAL AO EXEMPLO) ===== */
+        .date-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .date-side {
+            flex: 1;
+            border-top: 1px solid #d4a574;
+            border-bottom: 1px solid #d4a574;
+            padding: 15px 0;
+            font-size: 1.2rem;
+            color: #8b6f47;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .date-center {
+            font-family: 'Playfair Display', serif;
+            font-size: 6rem;
+            color: #d4a574;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .month-text {
+            font-size: 1.5rem;
+            color: #8b6f47;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+        }
+
+        /* ===== ÍCONES INTERATIVOS ===== */
+        .icons-section {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 40px;
+        }
+
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            width: 30%;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid #d4a574;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #d4a574;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .icon-item:hover .icon-circle {
+            background: #d4a574;
+            color: #fff;
+        }
+
+        .icon-label {
+            font-size: 0.8rem;
+            color: #8b6f47;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .click-hint {
+            margin-top: 30px;
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media print {
+            body { padding: 0; background: #fff; }
+            .pdf-container { box-shadow: none; border: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pdf-container" id="convite">
+        <!-- Decorações Florais -->
+        <div class="floral-header">🌿🌸🌿🌸🌿</div>
+        <div class="floral-footer">🌿🌸🌿🌸🌿</div>
+
+        <div class="content">
+            <div class="names-section">
+                <h1 class="couple-names">Erli</h1>
+                <div class="connector">e</div>
+                <h1 class="couple-names">Francisco</h1>
+            </div>
+
+            <p class="intro-text">Convidam carinhosamente para seu casamento</p>
+
+            <div class="date-container">
+                <div class="date-side">Sábado</div>
+                <div class="date-center">28</div>
+                <div class="date-side">às 16h</div>
+            </div>
+            <p class="month-text">Fevereiro</p>
+
+            <div class="icons-section">
+                <a href="https://www.google.com/maps/search/?api=1&query=Salão+de+Eventos+Rua+Exemplo+123" class="icon-item" target="_blank">
+                    <div class="icon-circle">📍</div>
+                    <div class="icon-label">Cerimônia e<br>Recepção</div>
+                </a>
+
+                <a href="https://erlifrancisco.netlify.app/" class="icon-item" target="_blank">
+                    <div class="icon-circle">💕</div>
+                    <div class="icon-label">Confirme sua<br>Presença</div>
+                </a>
+
+                <a href="https://erlifrancisco.netlify.app/" class="icon-item" target="_blank">
+                    <div class="icon-circle">🎁</div>
+                    <div class="icon-label">Lista de<br>Presentes</div>
+                </a>
+            </div>
+
+            <p class="click-hint">👆 Clique nos ícones para acessar</p>
+        </div>
+    </div>
+</body>
+</html>

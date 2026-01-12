@@ -1064,6 +1064,62 @@ body {
     font-weight: 300;
 }
 
+/* Seção de Download do PDF */
+.pdf-download-section {
+    margin-top: 50px;
+    padding: 0 20px;
+}
+
+.pdf-download-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 35px 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 25px rgba(139, 111, 71, 0.15);
+    border: 1px solid rgba(232, 196, 184, 0.3);
+    text-align: center;
+}
+
+.pdf-download-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #8b6f47;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.pdf-download-description {
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.pdf-download-button {
+    display: inline-block;
+    padding: 15px 35px;
+    background: linear-gradient(135deg, #8b6f47 0%, #d4a574 100%);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 5px 20px rgba(139, 111, 71, 0.3);
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+}
+
+.pdf-download-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(139, 111, 71, 0.4);
+}
+
+.pdf-download-button:active {
+    transform: translateY(-1px);
+}
+
 /* Modal de Confirmação */
 .modal-overlay {
     position: fixed;

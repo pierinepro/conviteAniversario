@@ -1508,6 +1508,160 @@ if (saveFieldsConfigBtn) {
     });
 }
 
+// Função para baixar PDF do convite
+async function downloadInvitationPDF() {
+    try {
+        // Carregar a biblioteca html2pdf se ainda não estiver carregada
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            document.head.appendChild(script);
+            
+            // Aguardar o script carregar
+            await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+                setTimeout(() => reject(new Error('Timeout ao carregar html2pdf')), 10000);
+            });
+        }
+
+        // Carregar o template do PDF
+        const response = await fetch('pdf-template.html');
+        if (!response.ok) {
+            throw new Error('Não foi possível carregar pdf-template.html. Verifique se o arquivo existe.');
+        }
+        const htmlContent = await response.text();
+        
+        // Criar um parser para extrair o conteúdo do template
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        
+        // Criar um container temporário oculto no DOM
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'fixed';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '0';
+        tempContainer.style.width = '800px';
+        tempContainer.style.height = '1131px';
+        tempContainer.style.overflow = 'hidden';
+        tempContainer.style.backgroundColor = '#ffffff';
+        document.body.appendChild(tempContainer);
+        
+        // Copiar os estilos do template
+        const styles = doc.querySelectorAll('style');
+        styles.forEach(style => {
+            const styleEl = document.createElement('style');
+            styleEl.textContent = style.textContent;
+            tempContainer.appendChild(styleEl);
+        });
+        
+        // Copiar os links de fontes
+        const fontLinks = doc.querySelectorAll('link[rel="stylesheet"]');
+        fontLinks.forEach(link => {
+            const linkEl = document.createElement('link');
+            linkEl.rel = 'stylesheet';
+            linkEl.href = link.href;
+            document.head.appendChild(linkEl);
+        });
+        
+        // Copiar o elemento do convite
+        const templateElement = doc.getElementById('convite');
+        if (!templateElement) {
+            document.body.removeChild(tempContainer);
+            throw new Error('Elemento do convite não encontrado no template');
+        }
+        
+        // Clonar o elemento e adicionar ao container
+        const clonedElement = templateElement.cloneNode(true);
+        tempContainer.appendChild(clonedElement);
+        
+        // Aguardar as fontes carregarem e o elemento renderizar
+        await new Promise((resolve) => {
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => {
+                    setTimeout(resolve, 1500);
+                });
+            } else {
+                setTimeout(resolve, 2500);
+            }
+        });
+        
+        // Verificar se o elemento está visível
+        if (!clonedElement.offsetHeight || !clonedElement.offsetWidth) {
+            document.body.removeChild(tempContainer);
+            throw new Error('Elemento não está renderizado corretamente');
+        }
+        
+        // Forçar reflow para garantir renderização
+        clonedElement.offsetHeight;
+        
+        // Log para debug
+        console.log('Elemento clonado:', {
+            width: clonedElement.offsetWidth,
+            height: clonedElement.offsetHeight,
+            hasContent: clonedElement.innerHTML.length > 0
+        });
+        
+        // Configurações do PDF
+        const opt = {
+            filename: 'Convite_Erli_e_Francisco.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 0.95,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                allowTaint: false,
+                letterRendering: true
+            },
+            jsPDF: {
+                unit: 'px',
+                format: [800, 1131],
+                orientation: 'portrait',
+                compress: true,
+                precision: 16
+            },
+            pagebreak: { 
+                mode: ['avoid-all', 'css', 'legacy']
+            },
+            margin: [0, 0, 0, 0]
+        };
+        
+        // Gerar o PDF e manipular para remover página em branco
+        const worker = html2pdf()
+            .set(opt)
+            .from(clonedElement);
+        
+        // Usar toPdf para ter controle sobre o PDF gerado
+        await worker.toPdf().get('pdf').then((pdf) => {
+            // Verificar e remover primeira página se estiver em branco
+            const totalPages = pdf.internal.getNumberOfPages();
+            if (totalPages > 1) {
+                // Remover a primeira página (que está em branco)
+                pdf.deletePage(1);
+            }
+        }).save();
+        
+        // Remover o container temporário e links de fontes após um pequeno delay
+        setTimeout(() => {
+            if (tempContainer.parentNode) {
+                document.body.removeChild(tempContainer);
+            }
+            fontLinks.forEach(() => {
+                const lastLink = document.head.querySelector('link[rel="stylesheet"]:last-of-type');
+                if (lastLink && lastLink.href.includes('fonts.googleapis.com')) {
+                    document.head.removeChild(lastLink);
+                }
+            });
+        }, 1000);
+        
+        console.log('PDF gerado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        alert('❌ Erro ao gerar PDF: ' + error.message);
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Área administrativa carregada!');
@@ -1521,6 +1675,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Carregar convidados do Firestore ou localStorage
     await loadGuestsFromFirestore();
     console.log('Convidados registrados:', guestsList.length);
+    
+    // Event listener para botão de download do PDF
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', async function() {
+            downloadPdfBtn.disabled = true;
+            downloadPdfBtn.textContent = '⏳ Gerando PDF...';
+            
+            await downloadInvitationPDF();
+            
+            downloadPdfBtn.disabled = false;
+            downloadPdfBtn.textContent = '📥 Baixar PDF do Convite';
+        });
+    }
     
     if (!isFirebaseConfigured()) {
         console.warn('Firebase não configurado. Usando localStorage como fallback.');
