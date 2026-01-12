@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convite de Casamento - Erli & Francisco</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Configurações -->
+    <script src="config.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCtugbMBTNZh30gDJIO8szSTKwe7FuyZcY",
+            authDomain: "convite-casamento-d15b7.firebaseapp.com",
+            projectId: "convite-casamento-d15b7",
+            storageBucket: "convite-casamento-d15b7.firebasestorage.app",
+            messagingSenderId: "393452119488",
+            appId: "1:393452119488:web:3a5a62a535d021bb81d425"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Disponibilizar globalmente
+        window.firebaseApp = app;
+        window.firebaseDb = db;
+        window.firebaseAuth = auth;
+    </script>
+</head>
+<body>
+    <!-- Link Admin (discreto) -->
+    <a href="admin.html" class="admin-link" style="position: fixed; top: 20px; right: 20px; z-index: 10000; color: #8b6f47; text-decoration: none; font-size: 0.85rem; opacity: 0.6; transition: opacity 0.3s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">admin</a>
+    
+    <!-- Porta de Entrada -->
+    <div id="doorIntro" class="door-intro">
+        <div class="door-container">
+            <div class="door-left"></div>
+            <div class="door-right"></div>
+            <div class="door-content">
+                <div class="door-ornament-top"></div>
+                <h2 class="door-title">Erli & Francisco</h2>
+                <p class="door-subtitle">Clique para entrar</p>
+                <div class="door-ornament-bottom"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
+        <!-- Hero Section com Imagem -->
+        <section class="hero-romantic">
+            <div class="hero-image-wrapper">
+                <div class="hero-image"></div>
+                <div class="torn-paper-edge"></div>
+            </div>
+            <div class="hero-content-romantic">
+                <h1 class="couple-names-romantic">Erli Pierine<br>&<br>Francisco Rodrigues</h1>
+                <p class="hero-subtitle-romantic">Convidamos você para presenciar este momento tão especial</p>
+                <div class="date-romantic">
+                    <div class="flourish-left">🌿</div>
+                    <div class="date-content">
+                        <p class="date-main">28.02.2026</p>
+                        <p class="date-day">Sábado</p>
+                        <p class="date-time">às 16h</p>
+                    </div>
+                    <div class="flourish-right">🌿</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seções com Ícones -->
+        <section class="info-icons-section">
+            <div class="info-icon-item" id="locationIcon">
+                <div class="icon-circle">📍</div>
+                <p class="icon-label">Localização</p>
+            </div>
+            <div class="info-icon-item" id="dressIcon">
+                <div class="icon-circle">👔</div>
+                <p class="icon-label">Vestimenta</p>
+            </div>
+            <div class="info-icon-item" id="rsvpIcon">
+                <div class="icon-circle">💕</div>
+                <p class="icon-label">Confirme</p>
+            </div>
+        </section>
+
+        <!-- Detalhes Expansíveis -->
+        <section class="details-section">
+            <!-- Localização -->
+            <div class="detail-card" id="locationCard" style="display: none;">
+                <div class="detail-header">
+                    <span class="detail-icon">📍</span>
+                    <h2>Localização</h2>
+                </div>
+                <div class="detail-content">
+                    <p class="location-name">Salão de Eventos</p>
+                    <p class="location-address">Rua Exemplo, 123 - Centro</p>
+                    <p class="location-city">Cidade - Estado</p>
+                    <a href="#" class="map-link" id="mapLink">Ver no mapa</a>
+                </div>
+            </div>
+
+            <!-- Vestimenta -->
+            <div class="detail-card" id="dressCard" style="display: none;">
+                <div class="detail-header">
+                    <span class="detail-icon">👔</span>
+                    <h2>Tipo de Vestimenta</h2>
+                </div>
+                <div class="detail-content">
+                    <p class="dresscode-text">Roupa Esporte Chique</p>
+                    <p class="dresscode-description">Solicitamos que venham elegantemente vestidos para celebrar conosco este momento especial</p>
+                </div>
+            </div>
+
+        <!-- RSVP Section -->
+        <section class="rsvp-section-romantic">
+            <div class="rsvp-card-romantic" id="rsvpCard" style="display: none;">
+                <h2>Confirme sua Presença</h2>
+                <p class="rsvp-subtitle">Sua presença é muito importante para nós!</p>
+                
+                <form id="rsvpForm" class="rsvp-form">
+                    <div class="form-group">
+                        <label for="guestName">Seu Nome *</label>
+                        <input type="text" id="guestName" name="guestName" required placeholder="Digite seu nome completo">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestEmail">E-mail *</label>
+                        <input type="email" id="guestEmail" name="guestEmail" required placeholder="seu@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestPhone">Telefone</label>
+                        <input type="tel" id="guestPhone" name="guestPhone" placeholder="(00) 00000-0000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Você comparecerá? *</label>
+                        <div class="radio-group">
+                            <label class="radio-option radio-option-yes">
+                                <input type="radio" name="attendance" value="yes" required>
+                                <span class="radio-custom"></span>
+                                <span class="radio-icon-wrapper">
+                                    <span class="radio-icon">✅</span>
+                                </span>
+                                <span class="radio-label">Sim, comparecerei</span>
+                            </label>
+                            <label class="radio-option radio-option-maybe">
+                                <input type="radio" name="attendance" value="maybe" required>
+                                <span class="radio-custom"></span>
+                                <span class="radio-icon-wrapper">
+                                    <span class="radio-icon">❓</span>
+                                </span>
+                                <span class="radio-label">Em dúvida</span>
+                            </label>
+                            <label class="radio-option radio-option-no">
+                                <input type="radio" name="attendance" value="no" required>
+                                <span class="radio-custom"></span>
+                                <span class="radio-icon-wrapper">
+                                    <span class="radio-icon">❌</span>
+                                </span>
+                                <span class="radio-label">Não comparecerei</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="companionsGroup" style="display: none;">
+                        <label for="companions">Acompanhantes</label>
+                        <div id="companionsList"></div>
+                        <button type="button" class="btn-add-companion" id="addCompanionBtn">
+                            <span>+</span> Adicionar Acompanhante
+                        </button>
+                        <p class="helper-text">Adicione o nome das pessoas que o acompanharão</p>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Confirmar</button>
+                </form>
+
+                <div id="successMessage" class="success-message" style="display: none;">
+                    <div class="success-icon">✓</div>
+                    <p>Obrigado por confirmar sua presença!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal de Confirmação -->
+        <div id="confirmationModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <button class="modal-close" id="closeModal">×</button>
+                <div class="modal-body">
+                    <p class="modal-message">Obrigado pela confirmação, estamos ansiosos para dividir esse momento especial com você</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-gift-list" id="giftListBtn">Ver Lista de Presentes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Não Comparecimento -->
+        <div id="declineModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <button class="modal-close" id="closeDeclineModal">×</button>
+                <div class="modal-body">
+                    <p class="modal-message">Que pena que você não poderá estar conosco nesse dia tão especial, mas agradecemos muito pela consideração e pelos bons votos.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Em Dúvida -->
+        <div id="maybeModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <button class="modal-close" id="closeMaybeModal">×</button>
+                <div class="modal-body">
+                    <p class="modal-message">Entendemos sua situação. Pedimos, por gentileza, que nos confirme sua decisão final com até 10 dias de antecedência para que possamos nos organizar da melhor forma. Agradecemos muito a sua compreensão.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer-romantic">
+            <div class="footer-floral">🌿</div>
+            <p>Com carinho,</p>
+            <p class="footer-names">Erli Pierine & Francisco Rodrigues</p>
+            <div class="footer-hearts">💕</div>
+            <div class="bible-verse">
+                <p class="verse-text">"Acima de tudo, porém, revistam-se do amor, que é o elo perfeito."</p>
+                <p class="verse-reference">- Colossenses 3: 14</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
