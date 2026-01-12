@@ -73,8 +73,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Regras para convidados (para confirmarem presença)
     match /guests/{document=**} {
       // Qualquer um pode ler e escrever (para convidados confirmarem presença)
+      allow read, write: if true;
+    }
+    
+    // Regras para configurações do painel admin
+    match /config/{document=**} {
+      // Todos podem ler (para carregar configurações)
+      // Todos podem escrever (para salvar configurações do admin)
       allow read, write: if true;
     }
   }
@@ -83,7 +91,33 @@ service cloud.firestore {
 
 3. Clique em "Publicar"
 
-**Nota**: As regras acima permitem que qualquer pessoa leia e escreva na coleção `guests` (necessário para os convidados confirmarem presença). O acesso ao painel admin é controlado pelo Firebase Authentication, não pelas regras do Firestore.
+**Nota**: 
+- As regras acima permitem que qualquer pessoa leia e escreva na coleção `guests` (necessário para os convidados confirmarem presença)
+- As regras também permitem leitura e escrita na coleção `config` (necessário para salvar configurações do painel admin, como limite de acompanhantes e campos habilitados)
+- O acesso ao painel admin é controlado pelo Firebase Authentication, não pelas regras do Firestore
+- **Importante**: Se você receber erro "Missing or insufficient permissions" ao salvar configurações, verifique se adicionou a regra para a coleção `config` acima
+
+### Regras Mais Seguras (Opcional)
+
+Se você quiser mais segurança, pode restringir a escrita na coleção `config` apenas para usuários autenticados:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /guests/{document=**} {
+      allow read, write: if true;
+    }
+    
+    match /config/{document=**} {
+      allow read: if true;  // Todos podem ler
+      allow write: if request.auth != null;  // Apenas usuários autenticados podem escrever
+    }
+  }
+}
+```
+
+**Nota sobre localStorage**: Mesmo sem permissão no Firestore para a coleção `config`, as configurações funcionarão perfeitamente usando localStorage. As regras do Firestore são necessárias apenas se você quiser sincronizar as configurações entre diferentes dispositivos ou navegadores.
 
 ## 6. Obter as Credenciais do Firebase
 

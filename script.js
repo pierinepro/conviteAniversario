@@ -247,6 +247,10 @@ function initializeFormElements() {
                         companionsGroup.style.display = 'block';
                         companionsGroup.style.animation = 'fadeInUp 0.5s ease';
                     }
+                    // Atualizar estado do botão quando mostrar grupo de acompanhantes
+                    if (typeof updateAddCompanionButton === 'function') {
+                        setTimeout(updateAddCompanionButton, 100);
+                    }
                 } else {
                     if (companionsGroup) {
                         companionsGroup.style.display = 'none';
@@ -255,14 +259,140 @@ function initializeFormElements() {
                     if (companionsList) {
                         companionsList.innerHTML = '';
                     }
+                    // Atualizar estado do botão quando esconder grupo
+                    if (typeof updateAddCompanionButton === 'function') {
+                        updateAddCompanionButton();
+                    }
                 }
             });
         });
     }
     
+    // Variável para armazenar o limite de acompanhantes (global)
+    window.companionLimit = 5; // Valor padrão
+    
+    // Função para carregar limite de acompanhantes
+    async function loadCompanionLimit() {
+        if (isFirebaseConfigured()) {
+            try {
+                const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+                const configRef = doc(collection(window.firebaseDb, 'config'), 'companionLimit');
+                const configDoc = await getDoc(configRef);
+                
+                if (configDoc.exists()) {
+                    window.companionLimit = configDoc.data().limit || 5;
+                    console.log('Limite de acompanhantes carregado:', window.companionLimit);
+                    return window.companionLimit;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar limite de acompanhantes:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        const storedLimit = localStorage.getItem('companionLimit');
+        if (storedLimit) {
+            window.companionLimit = parseInt(storedLimit);
+            console.log('Limite de acompanhantes carregado do localStorage:', window.companionLimit);
+            return window.companionLimit;
+        }
+        
+        window.companionLimit = 5; // Valor padrão
+        return 5;
+    }
+    
+    // Carregar limite ao inicializar
+    loadCompanionLimit();
+    
+    // Função para carregar configurações de campos
+    async function loadFieldsConfig() {
+        if (isFirebaseConfigured()) {
+            try {
+                const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+                const configRef = doc(collection(window.firebaseDb, 'config'), 'fieldsConfig');
+                const configDoc = await getDoc(configRef);
+                
+                if (configDoc.exists()) {
+                    const config = configDoc.data();
+                    const emailEnabled = config.enableEmail !== false; // Padrão: true
+                    const phoneEnabled = config.enablePhone !== false; // Padrão: true
+                    
+                    // Aplicar configurações
+                    const emailFieldGroup = document.getElementById('emailFieldGroup');
+                    const phoneFieldGroup = document.getElementById('phoneFieldGroup');
+                    const emailInput = document.getElementById('guestEmail');
+                    const phoneInput = document.getElementById('guestPhone');
+                    
+                    if (emailFieldGroup) {
+                        emailFieldGroup.style.display = emailEnabled ? 'block' : 'none';
+                    }
+                    if (phoneFieldGroup) {
+                        phoneFieldGroup.style.display = phoneEnabled ? 'block' : 'none';
+                    }
+                    
+                    // Tornar obrigatório ou não baseado na configuração
+                    if (emailInput) {
+                        emailInput.required = emailEnabled;
+                    }
+                    if (phoneInput) {
+                        phoneInput.required = false; // Telefone sempre opcional
+                    }
+                    
+                    console.log('Configurações de campos carregadas:', { emailEnabled, phoneEnabled });
+                    return config;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar configurações de campos:', error);
+            }
+        }
+        
+        // Fallback para localStorage
+        const storedEmail = localStorage.getItem('enableEmailField');
+        const storedPhone = localStorage.getItem('enablePhoneField');
+        
+        const emailEnabled = storedEmail !== 'false'; // Padrão: true
+        const phoneEnabled = storedPhone !== 'false'; // Padrão: true
+        
+        // Aplicar configurações
+        const emailFieldGroup = document.getElementById('emailFieldGroup');
+        const phoneFieldGroup = document.getElementById('phoneFieldGroup');
+        const emailInput = document.getElementById('guestEmail');
+        const phoneInput = document.getElementById('guestPhone');
+        
+        if (emailFieldGroup) {
+            emailFieldGroup.style.display = emailEnabled ? 'block' : 'none';
+        }
+        if (phoneFieldGroup) {
+            phoneFieldGroup.style.display = phoneEnabled ? 'block' : 'none';
+        }
+        
+        if (emailInput) {
+            emailInput.required = emailEnabled;
+        }
+        if (phoneInput) {
+            phoneInput.required = false;
+        }
+        
+        return { enableEmail: emailEnabled, enablePhone: phoneEnabled };
+    }
+    
+    // Carregar configurações de campos ao inicializar
+    loadFieldsConfig();
+    
     // Configurar botão de adicionar acompanhante
     if (addCompanionBtn) {
-        addCompanionBtn.addEventListener('click', function() {
+        addCompanionBtn.addEventListener('click', async function() {
+            // Verificar limite atual
+            const currentCompanions = document.querySelectorAll('.companion-item').length;
+            
+            // Recarregar limite (caso tenha sido alterado)
+            await loadCompanionLimit();
+            
+            if (currentCompanions >= window.companionLimit) {
+                alert(`Limite de acompanhantes atingido! Você pode adicionar no máximo ${window.companionLimit} acompanhante(s).`);
+                return;
+            }
+            
             const companionItem = document.createElement('div');
             companionItem.className = 'companion-item';
             companionItem.innerHTML = `
@@ -278,8 +408,36 @@ function initializeFormElements() {
             if (newInput) {
                 newInput.focus();
             }
+            
+            // Atualizar estado do botão
+            if (typeof window.updateAddCompanionButton === 'function') {
+                window.updateAddCompanionButton();
+            }
         });
     }
+    
+    // Função para atualizar estado do botão de adicionar acompanhante (global)
+    window.updateAddCompanionButton = function() {
+        if (!addCompanionBtn) return;
+        
+        const currentCompanions = document.querySelectorAll('.companion-item').length;
+        
+        if (currentCompanions >= window.companionLimit) {
+            addCompanionBtn.disabled = true;
+            addCompanionBtn.style.opacity = '0.5';
+            addCompanionBtn.style.cursor = 'not-allowed';
+            if (addCompanionBtn.textContent) {
+                addCompanionBtn.textContent = `+ Adicionar Acompanhante (Limite: ${window.companionLimit})`;
+            }
+        } else {
+            addCompanionBtn.disabled = false;
+            addCompanionBtn.style.opacity = '1';
+            addCompanionBtn.style.cursor = 'pointer';
+            if (addCompanionBtn.textContent && addCompanionBtn.textContent.includes('(Limite:')) {
+                addCompanionBtn.textContent = '+ Adicionar Acompanhante';
+            }
+        }
+    };
 }
 
 // Remover acompanhante (função global para onclick)
@@ -288,6 +446,10 @@ function removeCompanion(button) {
     companionItem.style.animation = 'fadeOut 0.3s ease';
     setTimeout(() => {
         companionItem.remove();
+        // Atualizar estado do botão após remover
+        if (typeof updateAddCompanionButton === 'function') {
+            updateAddCompanionButton();
+        }
     }, 300);
 }
 
@@ -397,8 +559,6 @@ function setupFormSubmit() {
         console.log('Formulário submetido!');
         
         const guestNameEl = document.getElementById('guestName');
-        const guestEmailEl = document.getElementById('guestEmail');
-        const guestPhoneEl = document.getElementById('guestPhone');
         const attendanceRadio = document.querySelector('input[name="attendance"]:checked');
         
         if (!guestNameEl) {
@@ -407,31 +567,51 @@ function setupFormSubmit() {
             return;
         }
         
-        if (!guestEmailEl) {
-            console.error('Campo guestEmail não encontrado!');
-            alert('Erro: Campo de e-mail não encontrado. Por favor, recarregue a página.');
-            return;
+        const guestName = guestNameEl.value.trim();
+        
+        // Verificar se campos estão habilitados
+        const emailFieldGroup = document.getElementById('emailFieldGroup');
+        const phoneFieldGroup = document.getElementById('phoneFieldGroup');
+        const emailEnabled = emailFieldGroup && emailFieldGroup.style.display !== 'none';
+        const phoneEnabled = phoneFieldGroup && phoneFieldGroup.style.display !== 'none';
+        
+        let guestEmail = null;
+        let guestPhone = null;
+        
+        // Coletar e-mail apenas se o campo estiver habilitado e existir
+        if (emailEnabled) {
+            const guestEmailEl = document.getElementById('guestEmail');
+            if (guestEmailEl) {
+                guestEmail = guestEmailEl.value.trim();
+            }
         }
         
-        const guestName = guestNameEl.value.trim();
-        const guestEmail = guestEmailEl.value.trim();
-        const guestPhone = guestPhoneEl ? guestPhoneEl.value.trim() : '';
+        // Coletar telefone apenas se o campo estiver habilitado e existir
+        if (phoneEnabled) {
+            const guestPhoneEl = document.getElementById('guestPhone');
+            if (guestPhoneEl) {
+                guestPhone = guestPhoneEl.value.trim();
+            }
+        }
         
         if (!guestName) {
-            alert('Por favor, preencha seu nome.');
+            alert('Por favor, preencha seu nome completo.');
             return;
         }
         
-        if (!guestEmail) {
-            alert('Por favor, preencha seu e-mail.');
-            return;
-        }
-        
-        // Validação básica de e-mail
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(guestEmail)) {
-            alert('Por favor, insira um e-mail válido.');
-            return;
+        // Validar e-mail apenas se o campo estiver habilitado
+        if (emailEnabled) {
+            if (!guestEmail) {
+                alert('Por favor, preencha seu e-mail.');
+                return;
+            }
+            
+            // Validação básica de e-mail
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(guestEmail)) {
+                alert('Por favor, insira um e-mail válido.');
+                return;
+            }
         }
         
         if (!attendanceRadio) {
@@ -585,6 +765,11 @@ function resetForm() {
     });
     if (radioGroup) {
         radioGroup.classList.remove('has-selection');
+    }
+    
+    // Atualizar estado do botão de adicionar acompanhante
+    if (typeof updateAddCompanionButton === 'function') {
+        updateAddCompanionButton();
     }
 }
 

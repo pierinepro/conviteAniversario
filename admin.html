@@ -112,6 +112,37 @@
                     <button class="btn-clear" id="clearListBtn">🗑️ Limpar Lista Completa</button>
                 </div>
                 
+                <!-- Seção de Configurações -->
+                <div class="admin-config-section">
+                    <h3>⚙️ Configurações</h3>
+                    <div class="config-item">
+                        <label for="companionLimit">Limite de Acompanhantes por Convidado:</label>
+                        <div class="config-input-group">
+                            <input type="number" id="companionLimit" min="0" max="20" value="5" class="config-input">
+                            <button class="btn-save-config" id="saveCompanionLimitBtn">💾 Salvar</button>
+                        </div>
+                        <div id="companionLimitMessage" class="config-message" style="display: none;"></div>
+                        <p class="config-description">Define quantos acompanhantes cada convidado pode adicionar no formulário.</p>
+                    </div>
+                    
+                    <div class="config-item">
+                        <label>Campos do Formulário:</label>
+                        <div class="config-checkbox-group">
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="enableEmailField" class="config-checkbox">
+                                <span>Habilitar campo de E-mail</span>
+                            </label>
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="enablePhoneField" class="config-checkbox">
+                                <span>Habilitar campo de Telefone</span>
+                            </label>
+                        </div>
+                        <button class="btn-save-config" id="saveFieldsConfigBtn" style="margin-top: 15px;">💾 Salvar Configurações</button>
+                        <div id="fieldsConfigMessage" class="config-message" style="display: none;"></div>
+                        <p class="config-description">Quando habilitado, o campo aparece no formulário. Quando desabilitado, o campo não é exibido.</p>
+                    </div>
+                </div>
+                
                 <!-- Seção de Busca -->
                 <div class="admin-search-section">
                     <h3>Buscar Convidado</h3>

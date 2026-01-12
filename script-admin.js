@@ -2,6 +2,10 @@
 // Lista de convidados - será carregada do Firestore
 let guestsList = [];
 
+// Variáveis de paginação
+let currentPage = 1;
+const itemsPerPage = 10; // Itens por página
+
 // Função para verificar se Firebase está configurado
 function isFirebaseConfigured() {
     const hasDb = window.firebaseDb && window.firebaseDb !== null && 
@@ -161,6 +165,11 @@ const searchResults = document.getElementById('searchResults');
 const statConfirmed = document.getElementById('statConfirmed');
 const statMaybe = document.getElementById('statMaybe');
 const statDeclined = document.getElementById('statDeclined');
+const companionLimitInput = document.getElementById('companionLimit');
+const saveCompanionLimitBtn = document.getElementById('saveCompanionLimitBtn');
+const enableEmailField = document.getElementById('enableEmailField');
+const enablePhoneField = document.getElementById('enablePhoneField');
+const saveFieldsConfigBtn = document.getElementById('saveFieldsConfigBtn');
 
 // Modais
 const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -204,7 +213,7 @@ async function exportToExcel() {
     const guests = stats.all;
     
     // Criar cabeçalhos
-    const headers = ['Nome', 'E-mail', 'Telefone', 'Status', 'Tipo', 'Data de Cadastro'];
+    const headers = ['Nome', 'E-mail', 'Telefone', 'Status', 'Tipo', 'Convidado Principal', 'Data de Cadastro'];
     
     // Criar linhas de dados - uma linha para cada pessoa (convidado + acompanhantes)
     const rows = [];
@@ -221,6 +230,7 @@ async function exportToExcel() {
             guest.phone || '',
             status,
             'Convidado',
+            '-', // Convidado principal não tem convidado principal
             date
         ]);
         
@@ -233,6 +243,7 @@ async function exportToExcel() {
                     guest.phone || '', // Mesmo telefone do convidado principal
                     status,
                     'Acompanhante',
+                    guest.name || '', // Nome do convidado principal
                     date
                 ]);
             });
@@ -275,6 +286,7 @@ async function exportToExcel() {
         { wch: 18 }, // Telefone
         { wch: 15 }, // Status
         { wch: 12 }, // Tipo
+        { wch: 25 }, // Convidado Principal
         { wch: 15 }  // Data
     ];
     ws['!cols'] = colWidths;
@@ -422,32 +434,93 @@ async function checkAuthState() {
     }
 }
 
+// Prevenir submit do formulário de senha
+const clearPasswordForm = document.getElementById('clearPasswordForm');
+if (clearPasswordForm) {
+    clearPasswordForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // O botão confirmClearBtn já tem o event listener, então não precisa fazer nada aqui
+    });
+}
+
 // Botão limpar lista
 if (clearListBtn) {
-    clearListBtn.addEventListener('click', function() {
-        if (clearConfirmModal) {
-            clearConfirmModal.style.display = 'flex';
+    clearListBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Botão limpar lista clicado');
+        
+        if (!clearConfirmModal) {
+            console.error('Modal de confirmação não encontrado!');
+            alert('Erro: Modal de confirmação não encontrado!');
+            return;
+        }
+        
+        console.log('Abrindo modal de confirmação');
+        console.log('Modal antes:', clearConfirmModal.style.display);
+        console.log('Modal computed style:', window.getComputedStyle(clearConfirmModal).display);
+        
+        // Forçar exibição do modal
+        clearConfirmModal.style.cssText = 'display: flex !important; z-index: 10005 !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;';
+        
+        console.log('Modal depois:', clearConfirmModal.style.display);
+        console.log('Modal computed style depois:', window.getComputedStyle(clearConfirmModal).display);
+        console.log('Modal offsetParent:', clearConfirmModal.offsetParent);
+        console.log('Modal z-index:', window.getComputedStyle(clearConfirmModal).zIndex);
+        
+        // Limpar campo de senha e erro
+        const passwordInput = document.getElementById('clearPassword');
+        const passwordError = document.getElementById('clearPasswordError');
+        
+        if (passwordInput) {
+            passwordInput.value = '';
+            setTimeout(() => {
+                passwordInput.focus();
+                console.log('Campo de senha focado');
+            }, 300);
+        } else {
+            console.error('Campo de senha não encontrado!');
+        }
+        
+        if (passwordError) {
+            passwordError.style.display = 'none';
+        } else {
+            console.error('Elemento de erro não encontrado!');
         }
     });
+} else {
+    console.error('Botão limpar lista não encontrado!');
 }
 
 // Confirmar limpeza
 if (confirmClearBtn) {
     confirmClearBtn.addEventListener('click', async function(e) {
         e.preventDefault();
+        console.log('Botão confirmar limpeza clicado');
         
         const passwordInput = document.getElementById('clearPassword');
         const passwordError = document.getElementById('clearPasswordError');
         
-        if (!passwordInput || !passwordInput.value.trim()) {
+        if (!passwordInput) {
+            console.error('Campo de senha não encontrado!');
+            alert('Erro: Campo de senha não encontrado!');
+            return;
+        }
+        
+        if (!passwordInput.value.trim()) {
+            console.log('Senha não fornecida');
             if (passwordError) {
                 passwordError.style.display = 'block';
-                passwordError.querySelector('p').textContent = 'Por favor, digite sua senha!';
+                const errorText = passwordError.querySelector('p');
+                if (errorText) {
+                    errorText.textContent = 'Por favor, digite sua senha!';
+                }
             }
+            passwordInput.focus();
             return;
         }
         
         const password = passwordInput.value.trim();
+        console.log('Validando senha...');
         
         // Validar senha
         let isValidPassword = false;
@@ -455,44 +528,55 @@ if (confirmClearBtn) {
         if (isFirebaseConfigured() && window.firebaseAuth) {
             try {
                 // Verificar se o usuário está autenticado e a senha está correta
-                const { signInWithEmailAndPassword, getAuth } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
                 
                 // Obter o e-mail do usuário atual autenticado
                 const currentUser = window.firebaseAuth.currentUser;
                 if (currentUser && currentUser.email) {
+                    console.log('Usuário autenticado encontrado:', currentUser.email);
                     // Tentar fazer login novamente com a senha fornecida
                     // Se funcionar, a senha está correta
                     try {
                         await signInWithEmailAndPassword(window.firebaseAuth, currentUser.email, password);
                         isValidPassword = true;
+                        console.log('Senha válida!');
                     } catch (error) {
+                        console.log('Senha inválida:', error.message);
                         isValidPassword = false;
                     }
                 } else {
+                    console.log('Nenhum usuário autenticado, usando fallback');
                     // Se não houver usuário autenticado, usar fallback
                     const ADMIN_CREDENTIALS = window.ADMIN_CONFIG || {
                         login: 'admin',
                         password: 'admin'
                     };
                     isValidPassword = (password === ADMIN_CREDENTIALS.password);
+                    console.log('Validação fallback:', isValidPassword);
                 }
             } catch (error) {
                 console.error('Erro ao validar senha:', error);
                 isValidPassword = false;
             }
         } else {
+            console.log('Firebase não configurado, usando fallback');
             // Fallback: usar sistema antigo se Firebase não estiver configurado
             const ADMIN_CREDENTIALS = window.ADMIN_CONFIG || {
                 login: 'admin',
                 password: 'admin'
             };
             isValidPassword = (password === ADMIN_CREDENTIALS.password);
+            console.log('Validação fallback:', isValidPassword);
         }
         
         if (!isValidPassword) {
+            console.log('Senha incorreta, exibindo erro');
             if (passwordError) {
                 passwordError.style.display = 'block';
-                passwordError.querySelector('p').textContent = 'Senha incorreta!';
+                const errorText = passwordError.querySelector('p');
+                if (errorText) {
+                    errorText.textContent = 'Senha incorreta!';
+                }
             }
             if (passwordInput) {
                 passwordInput.value = '';
@@ -502,25 +586,56 @@ if (confirmClearBtn) {
         }
         
         // Senha correta, proceder com a limpeza
+        console.log('Senha válida, iniciando limpeza...');
         if (passwordError) {
             passwordError.style.display = 'none';
         }
         
-        await clearAllGuests();
-        
-        // Limpar campo de senha
-        if (passwordInput) {
-            passwordInput.value = '';
+        // Mostrar loading
+        if (confirmClearBtn) {
+            confirmClearBtn.disabled = true;
+            confirmClearBtn.textContent = 'Excluindo...';
         }
         
-        if (clearConfirmModal) {
-            clearConfirmModal.style.display = 'none';
-        }
-        await updateAdminStats();
-        if (searchResults) {
-            searchResults.innerHTML = '';
+        try {
+            await clearAllGuests();
+            console.log('Limpeza concluída com sucesso');
+            
+            // Limpar campo de senha
+            if (passwordInput) {
+                passwordInput.value = '';
+            }
+            
+            if (clearConfirmModal) {
+                clearConfirmModal.style.display = 'none';
+                clearConfirmModal.setAttribute('style', 'display: none;');
+            }
+            
+            await updateAdminStats();
+            if (searchResults) {
+                searchResults.innerHTML = '';
+            }
+            
+            // Atualizar lista local
+            guestsList = [];
+            await loadGuestsFromFirestore();
+            
+            // Atualizar resultados da busca se houver
+            if (searchInput && searchInput.value.trim()) {
+                performSearch();
+            }
+        } catch (error) {
+            console.error('Erro ao limpar lista:', error);
+            alert('Erro ao limpar lista: ' + error.message);
+        } finally {
+            if (confirmClearBtn) {
+                confirmClearBtn.disabled = false;
+                confirmClearBtn.textContent = 'Sim, Excluir Tudo';
+            }
         }
     });
+} else {
+    console.error('Botão confirmar limpeza não encontrado!');
 }
 
 // Cancelar limpeza
@@ -538,6 +653,7 @@ if (cancelClearBtn) {
         
         if (clearConfirmModal) {
             clearConfirmModal.style.display = 'none';
+            clearConfirmModal.setAttribute('style', 'display: none;');
         }
     });
 }
@@ -556,6 +672,7 @@ if (closeClearModal) {
         
         if (clearConfirmModal) {
             clearConfirmModal.style.display = 'none';
+            clearConfirmModal.setAttribute('style', 'display: none;');
         }
     });
 }
@@ -579,25 +696,29 @@ if (searchInput) {
 function performSearch() {
     const searchTerm = searchInput.value.trim().toLowerCase();
     
-    if (!searchTerm) {
-        if (searchResults) {
-            searchResults.innerHTML = '<p class="search-message">Digite um termo para buscar.</p>';
-        }
-        return;
-    }
+    // Resetar para primeira página ao fazer nova busca
+    currentPage = 1;
     
-    const results = guestsList.filter(guest => {
-        const nameMatch = guest.name && guest.name.toLowerCase().includes(searchTerm);
-        const emailMatch = guest.email && guest.email.toLowerCase().includes(searchTerm);
-        const phoneMatch = guest.phone && guest.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''));
-        
-        return nameMatch || emailMatch || phoneMatch;
-    });
+    let results;
+    
+    if (!searchTerm) {
+        // Se estiver vazio, mostrar todos os convidados
+        results = [...guestsList];
+    } else {
+        // Filtrar por termo de busca
+        results = guestsList.filter(guest => {
+            const nameMatch = guest.name && guest.name.toLowerCase().includes(searchTerm);
+            const emailMatch = guest.email && guest.email.toLowerCase().includes(searchTerm);
+            const phoneMatch = guest.phone && guest.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''));
+            
+            return nameMatch || emailMatch || phoneMatch;
+        });
+    }
     
     displaySearchResults(results);
 }
 
-// Exibir resultados da busca
+// Exibir resultados da busca com paginação
 function displaySearchResults(results) {
     if (!searchResults) return;
     
@@ -606,57 +727,159 @@ function displaySearchResults(results) {
         return;
     }
     
-    let html = '<div class="results-list">';
+    // Calcular paginação
+    const totalPages = Math.ceil(results.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedResults = results.slice(startIndex, endIndex);
     
-    results.forEach(guest => {
-        const status = guest.attendance === 'yes' ? 'Confirmado' : 
-                      guest.attendance === 'maybe' ? 'Em Dúvida' : 'Não Comparecerá';
-        const statusIcon = guest.attendance === 'yes' ? '✅' : 
-                          guest.attendance === 'maybe' ? '❓' : '❌';
-        const date = new Date(guest.dateAdded).toLocaleDateString('pt-BR');
-        const companionsCount = guest.companions && Array.isArray(guest.companions) ? guest.companions.length : 0;
+    // Expandir resultados para incluir acompanhantes
+    const expandedResults = [];
+    paginatedResults.forEach(guest => {
+        // Adicionar o convidado principal
+        expandedResults.push({ ...guest, isCompanion: false, companionIndex: null });
         
-        html += `
-            <div class="result-item">
-                <div class="result-info">
-                    <h4>${guest.name || 'Sem nome'}</h4>
-                    <p><strong>E-mail:</strong> ${guest.email || 'Não informado'}</p>
-                    <p><strong>Telefone:</strong> ${guest.phone || 'Não informado'}</p>
-                    <p><strong>Status:</strong> ${statusIcon} ${status}</p>
-                    <p><strong>Data:</strong> ${date}</p>
-                    ${companionsCount > 0 ? `<p><strong>Acompanhantes:</strong> ${companionsCount} pessoa(s)</p>` : ''}
-                </div>
-                <div class="result-actions">
-                    <button class="btn-edit" onclick="editGuest('${guest.id || guest.name}')">✏️ Editar</button>
-                    <button class="btn-delete" onclick="deleteGuest('${guest.id || guest.name}')">🗑️ Excluir</button>
-                </div>
-            </div>
-        `;
-        
-        // Se houver acompanhantes, mostrar cada um separadamente
+        // Adicionar cada acompanhante como item separado
         if (guest.companions && Array.isArray(guest.companions) && guest.companions.length > 0) {
             guest.companions.forEach((companion, index) => {
-                html += `
-                    <div class="result-item result-companion">
-                        <div class="result-info">
-                            <h4>${companion} <span class="companion-badge">Acompanhante</span></h4>
-                            <p><strong>E-mail:</strong> ${guest.email || 'Não informado'}</p>
-                            <p><strong>Telefone:</strong> ${guest.phone || 'Não informado'}</p>
-                            <p><strong>Status:</strong> ${statusIcon} ${status}</p>
-                            <p><strong>Data:</strong> ${date}</p>
-                        </div>
-                        <div class="result-actions">
-                            <button class="btn-delete" onclick="deleteCompanion('${guest.id || guest.name}', ${index})">🗑️ Excluir Acompanhante</button>
-                        </div>
-                    </div>
-                `;
+                expandedResults.push({
+                    ...guest,
+                    name: companion,
+                    mainGuestName: guest.name, // Guardar nome do convidado principal
+                    mainGuestId: guest.id || guest.name, // Guardar ID do convidado principal para exclusão
+                    isCompanion: true,
+                    companionIndex: index
+                });
             });
         }
     });
     
+    let html = '<div class="results-list">';
+    
+    // Mostrar informações de paginação
+    html += `<div class="pagination-info">
+        <p>Mostrando ${startIndex + 1} - ${Math.min(endIndex, results.length)} de ${results.length} resultado(s)</p>
+    </div>`;
+    
+    expandedResults.forEach(item => {
+        const status = item.attendance === 'yes' ? 'Confirmado' : 
+                      item.attendance === 'maybe' ? 'Em Dúvida' : 'Não Comparecerá';
+        const statusIcon = item.attendance === 'yes' ? '✅' : 
+                          item.attendance === 'maybe' ? '❓' : '❌';
+        const date = new Date(item.dateAdded).toLocaleDateString('pt-BR');
+        
+        if (item.isCompanion) {
+            // Item é um acompanhante
+            const mainGuestName = item.mainGuestName || 'Convidado Principal';
+            html += `
+                <div class="result-item result-companion">
+                    <div class="result-info">
+                        <h4>${item.name} <span class="companion-badge">Acompanhante</span></h4>
+                        <p class="companion-main-guest"><strong>Convidado Principal:</strong> ${mainGuestName}</p>
+                        <p><strong>E-mail:</strong> ${item.email || 'Não informado'}</p>
+                        <p><strong>Telefone:</strong> ${item.phone || 'Não informado'}</p>
+                        <p><strong>Status:</strong> ${statusIcon} ${status}</p>
+                        <p><strong>Data:</strong> ${date}</p>
+                    </div>
+                    <div class="result-actions">
+                        <button class="btn-delete" onclick="deleteCompanion('${item.mainGuestId || item.id || item.mainGuestName}', ${item.companionIndex})">🗑️ Excluir Acompanhante</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Item é um convidado principal
+            const companionsCount = item.companions && Array.isArray(item.companions) ? item.companions.length : 0;
+            html += `
+                <div class="result-item">
+                    <div class="result-info">
+                        <h4>${item.name || 'Sem nome'}</h4>
+                        <p><strong>E-mail:</strong> ${item.email || 'Não informado'}</p>
+                        <p><strong>Telefone:</strong> ${item.phone || 'Não informado'}</p>
+                        <p><strong>Status:</strong> ${statusIcon} ${status}</p>
+                        <p><strong>Data:</strong> ${date}</p>
+                        ${companionsCount > 0 ? `<p><strong>Acompanhantes:</strong> ${companionsCount} pessoa(s)</p>` : ''}
+                    </div>
+                    <div class="result-actions">
+                        <button class="btn-edit" onclick="editGuest('${item.id || item.name}')">✏️ Editar</button>
+                        <button class="btn-delete" onclick="deleteGuest('${item.id || item.name}')">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
     html += '</div>';
+    
+    // Adicionar controles de paginação
+    if (totalPages > 1) {
+        html += generatePaginationControls(totalPages, currentPage);
+    }
+    
     searchResults.innerHTML = html;
 }
+
+// Gerar controles de paginação
+function generatePaginationControls(totalPages, currentPage) {
+    let html = '<div class="pagination-controls">';
+    
+    // Botão Anterior
+    if (currentPage > 1) {
+        html += `<button class="pagination-btn" onclick="goToPage(${currentPage - 1})">« Anterior</button>`;
+    } else {
+        html += `<button class="pagination-btn pagination-btn-disabled" disabled>« Anterior</button>`;
+    }
+    
+    // Números das páginas
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    if (startPage > 1) {
+        html += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
+        if (startPage > 2) {
+            html += `<span class="pagination-ellipsis">...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            html += `<button class="pagination-btn pagination-btn-active">${i}</button>`;
+        } else {
+            html += `<button class="pagination-btn" onclick="goToPage(${i})">${i}</button>`;
+        }
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            html += `<span class="pagination-ellipsis">...</span>`;
+        }
+        html += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+    }
+    
+    // Botão Próximo
+    if (currentPage < totalPages) {
+        html += `<button class="pagination-btn" onclick="goToPage(${currentPage + 1})">Próximo »</button>`;
+    } else {
+        html += `<button class="pagination-btn pagination-btn-disabled" disabled>Próximo »</button>`;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// Função para navegar para uma página específica
+window.goToPage = function(page) {
+    currentPage = page;
+    performSearch();
+    // Scroll para o topo dos resultados
+    if (searchResults) {
+        searchResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
 
 // Função global para editar convidado
 window.editGuest = function(guestId) {
@@ -787,7 +1010,19 @@ window.deleteGuest = function(guestId) {
     if (deleteConfirmModal) {
         const message = document.getElementById('deleteConfirmMessage');
         if (message) {
-            message.textContent = `Tem certeza que deseja excluir "${guestToDelete.name}"? Esta ação não pode ser desfeita!`;
+            // Verificar se há acompanhantes
+            const companionsCount = guestToDelete.companions && Array.isArray(guestToDelete.companions) ? guestToDelete.companions.length : 0;
+            let messageHTML = `Tem certeza que deseja excluir <strong>"${guestToDelete.name}"</strong>?`;
+            
+            if (companionsCount > 0) {
+                messageHTML += `<br><br><span style="color: #dc3545; font-weight: 600;">⚠️ ATENÇÃO: ${companionsCount} acompanhante(s) também será(ão) excluído(s):</span><br>`;
+                guestToDelete.companions.forEach((companion) => {
+                    messageHTML += `&nbsp;&nbsp;• ${companion}<br>`;
+                });
+            }
+            
+            messageHTML += '<br><strong>Esta ação não pode ser desfeita!</strong>';
+            message.innerHTML = messageHTML;
         }
         deleteConfirmModal.style.display = 'flex';
     }
@@ -1018,36 +1253,270 @@ async function deleteGuestFromFirestore(guest) {
 
 // Função para limpar toda a lista
 async function clearAllGuests() {
+    console.log('Iniciando limpeza de todos os convidados...');
+    
     if (isFirebaseConfigured()) {
         try {
-            const { collection, getDocs, doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            console.log('Limpando Firestore...');
+            const { collection, getDocs, deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
             
             const guestsRef = collection(window.firebaseDb, 'guests');
             const querySnapshot = await getDocs(guestsRef);
             
+            console.log(`Encontrados ${querySnapshot.size} documentos para excluir`);
+            
             // Excluir todos os documentos
             const deletePromises = [];
             querySnapshot.forEach((docSnapshot) => {
-                deletePromises.push(deleteDoc(doc(guestsRef, docSnapshot.id)));
+                deletePromises.push(deleteDoc(docSnapshot.ref));
             });
             
-            await Promise.all(deletePromises);
-            console.log('Todos os convidados excluídos do Firestore');
+            if (deletePromises.length > 0) {
+                await Promise.all(deletePromises);
+                console.log('Todos os convidados excluídos do Firestore');
+            } else {
+                console.log('Nenhum documento encontrado para excluir');
+            }
         } catch (error) {
             console.error('Erro ao limpar Firestore:', error);
+            throw error; // Re-lançar o erro para ser tratado acima
         }
+    } else {
+        console.log('Firebase não configurado, limpando apenas localStorage');
     }
     
     // Limpar localStorage também
     guestsList = [];
     saveToLocalStorage();
+    console.log('Lista local limpa');
     
     alert('Lista de convidados limpa com sucesso!');
+}
+
+// Função para carregar limite de acompanhantes
+async function loadCompanionLimit() {
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'companionLimit');
+            const configDoc = await getDoc(configRef);
+            
+            if (configDoc.exists()) {
+                const limit = configDoc.data().limit || 5;
+                if (companionLimitInput) {
+                    companionLimitInput.value = limit;
+                }
+                console.log('Limite de acompanhantes carregado:', limit);
+                return limit;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar limite de acompanhantes:', error);
+        }
+    }
+    
+    // Fallback para localStorage
+    const storedLimit = localStorage.getItem('companionLimit');
+    if (storedLimit) {
+        const limit = parseInt(storedLimit);
+        if (companionLimitInput) {
+            companionLimitInput.value = limit;
+        }
+        console.log('Limite de acompanhantes carregado do localStorage:', limit);
+        return limit;
+    }
+    
+    // Valor padrão
+    if (companionLimitInput) {
+        companionLimitInput.value = 5;
+    }
+    return 5;
+}
+
+// Função para salvar limite de acompanhantes
+async function saveCompanionLimit(limit) {
+    const limitValue = parseInt(limit);
+    if (isNaN(limitValue) || limitValue < 0) {
+        return { success: false, message: 'Por favor, digite um número válido maior ou igual a zero!' };
+    }
+    
+    // Sempre salvar no localStorage primeiro (funciona sempre)
+    localStorage.setItem('companionLimit', limitValue.toString());
+    
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'companionLimit');
+            await setDoc(configRef, { limit: limitValue }, { merge: true });
+            console.log('Limite de acompanhantes salvo no Firestore:', limitValue);
+            return { success: true, message: `✅ Limite de acompanhantes atualizado para ${limitValue} com sucesso!` };
+        } catch (error) {
+            console.error('Erro ao salvar limite no Firestore:', error);
+            // Se for erro de permissão, informar mas continuar (já salvou no localStorage)
+            if (error.code === 'permission-denied' || error.message.includes('permission')) {
+                return { 
+                    success: true, 
+                    message: `✅ Limite salvo localmente: ${limitValue}\n⚠️ Nota: Para salvar no Firebase, é necessário configurar as regras do Firestore para permitir escrita na coleção 'config'.` 
+                };
+            }
+            return { success: true, message: `✅ Limite salvo localmente: ${limitValue} (Firebase indisponível)` };
+        }
+    } else {
+        return { success: true, message: `✅ Limite salvo localmente: ${limitValue}` };
+    }
+}
+
+// Função para carregar configurações de campos
+async function loadFieldsConfig() {
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'fieldsConfig');
+            const configDoc = await getDoc(configRef);
+            
+            if (configDoc.exists()) {
+                const config = configDoc.data();
+                if (enableEmailField) {
+                    enableEmailField.checked = config.enableEmail !== false; // Padrão: true
+                }
+                if (enablePhoneField) {
+                    enablePhoneField.checked = config.enablePhone !== false; // Padrão: true
+                }
+                console.log('Configurações de campos carregadas:', config);
+                return config;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar configurações de campos:', error);
+        }
+    }
+    
+    // Fallback para localStorage
+    const storedEmail = localStorage.getItem('enableEmailField');
+    const storedPhone = localStorage.getItem('enablePhoneField');
+    
+    if (enableEmailField) {
+        enableEmailField.checked = storedEmail !== 'false'; // Padrão: true
+    }
+    if (enablePhoneField) {
+        enablePhoneField.checked = storedPhone !== 'false'; // Padrão: true
+    }
+    
+    return {
+        enableEmail: storedEmail !== 'false',
+        enablePhone: storedPhone !== 'false'
+    };
+}
+
+// Função para salvar configurações de campos
+async function saveFieldsConfig() {
+    const emailEnabled = enableEmailField ? enableEmailField.checked : true;
+    const phoneEnabled = enablePhoneField ? enablePhoneField.checked : true;
+    
+    const config = {
+        enableEmail: emailEnabled,
+        enablePhone: phoneEnabled
+    };
+    
+    // Sempre salvar no localStorage primeiro (funciona sempre)
+    localStorage.setItem('enableEmailField', emailEnabled.toString());
+    localStorage.setItem('enablePhoneField', phoneEnabled.toString());
+    
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'fieldsConfig');
+            await setDoc(configRef, config, { merge: true });
+            console.log('Configurações de campos salvas no Firestore:', config);
+            return { success: true, message: '✅ Configurações de campos salvas com sucesso!' };
+        } catch (error) {
+            console.error('Erro ao salvar configurações no Firestore:', error);
+            // Se for erro de permissão, informar mas continuar (já salvou no localStorage)
+            if (error.code === 'permission-denied' || error.message.includes('permission')) {
+                return { 
+                    success: true, 
+                    message: `✅ Configurações salvas localmente!\n⚠️ Nota: Para salvar no Firebase, é necessário configurar as regras do Firestore para permitir escrita na coleção 'config'.` 
+                };
+            }
+            return { success: true, message: '✅ Configurações salvas localmente (Firebase indisponível)' };
+        }
+    } else {
+        return { success: true, message: '✅ Configurações salvas localmente!' };
+    }
+}
+
+// Função para exibir mensagem de configuração
+function showConfigMessage(messageElementId, message, isSuccess = true) {
+    const messageElement = document.getElementById(messageElementId);
+    if (!messageElement) return;
+    
+    messageElement.textContent = message;
+    messageElement.className = 'config-message ' + (isSuccess ? 'config-message-success' : 'config-message-error');
+    messageElement.style.display = 'block';
+    
+    // Scroll suave para a mensagem
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Remover mensagem após 5 segundos
+    setTimeout(() => {
+        if (messageElement) {
+            messageElement.style.display = 'none';
+            messageElement.textContent = '';
+        }
+    }, 5000);
+}
+
+// Event listener para salvar limite
+if (saveCompanionLimitBtn) {
+    saveCompanionLimitBtn.addEventListener('click', async function() {
+        if (!companionLimitInput) {
+            showConfigMessage('companionLimitMessage', '❌ Erro: Campo de limite não encontrado!', false);
+            return;
+        }
+        
+        // Desabilitar botão durante o salvamento
+        saveCompanionLimitBtn.disabled = true;
+        saveCompanionLimitBtn.textContent = '💾 Salvando...';
+        
+        const limit = companionLimitInput.value;
+        const result = await saveCompanionLimit(limit);
+        
+        // Reabilitar botão
+        saveCompanionLimitBtn.disabled = false;
+        saveCompanionLimitBtn.textContent = '💾 Salvar';
+        
+        showConfigMessage('companionLimitMessage', result.message, result.success);
+    });
+}
+
+// Event listener para salvar configurações de campos
+if (saveFieldsConfigBtn) {
+    saveFieldsConfigBtn.addEventListener('click', async function() {
+        // Desabilitar botão durante o salvamento
+        saveFieldsConfigBtn.disabled = true;
+        saveFieldsConfigBtn.textContent = '💾 Salvando...';
+        
+        const result = await saveFieldsConfig();
+        
+        // Reabilitar botão
+        saveFieldsConfigBtn.disabled = false;
+        saveFieldsConfigBtn.textContent = '💾 Salvar Configurações';
+        
+        if (result.success) {
+            showConfigMessage('fieldsConfigMessage', result.message, true);
+        } else {
+            showConfigMessage('fieldsConfigMessage', '❌ Erro ao salvar configurações. Tente novamente.', false);
+        }
+    });
 }
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Área administrativa carregada!');
+    
+    // Carregar limite de acompanhantes
+    await loadCompanionLimit();
+    
+    // Carregar configurações de campos
+    await loadFieldsConfig();
     
     // Carregar convidados do Firestore ou localStorage
     await loadGuestsFromFirestore();
