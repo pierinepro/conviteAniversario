@@ -778,7 +778,7 @@ if (mapLink) {
     mapLink.addEventListener('click', function(e) {
         e.preventDefault();
         // Substitua pela URL real do Google Maps
-        const address = encodeURIComponent('Rua Exemplo, 123 - Centro, Cidade - Estado');
+        const address = encodeURIComponent('Rua Maria Sieglinde 24, Vila Hulda - Centro de Guarulhos');
         window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
     });
 }
