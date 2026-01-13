@@ -194,6 +194,15 @@ function initializeFormElements() {
     mapLink = document.getElementById('mapLink');
     radioGroup = document.querySelector('.radio-group');
     
+    // Configurar link do mapa
+    if (mapLink) {
+        mapLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            const address = encodeURIComponent('Rua Maria Sieglinde 24, Vila Hulda - Centro de Guarulhos');
+            window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
+        });
+    }
+    
     // Adicionar formatação ao campo de telefone
     const guestPhoneInput = document.getElementById('guestPhone');
     if (guestPhoneInput) {
@@ -771,16 +780,6 @@ function resetForm() {
     if (typeof updateAddCompanionButton === 'function') {
         updateAddCompanionButton();
     }
-}
-
-// Link do mapa (pode ser atualizado com link real do Google Maps)
-if (mapLink) {
-    mapLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        // Substitua pela URL real do Google Maps
-        const address = encodeURIComponent('Rua Maria Sieglinde 24, Vila Hulda - Centro de Guarulhos');
-        window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
-    });
 }
 
 // Função para obter lista de convidados (carrega do Firestore ou localStorage)
