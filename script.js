@@ -203,6 +203,13 @@ function initializeFormElements() {
         });
     }
     
+    // Configurar limite máximo da data de nascimento (hoje)
+    const guestBirthDateEl = document.getElementById('guestBirthDate');
+    if (guestBirthDateEl) {
+        const today = new Date().toISOString().split('T')[0];
+        guestBirthDateEl.setAttribute('max', today);
+    }
+    
     // Adicionar formatação ao campo de telefone
     const guestPhoneInput = document.getElementById('guestPhone');
     if (guestPhoneInput) {
@@ -404,8 +411,12 @@ function initializeFormElements() {
             
             const companionItem = document.createElement('div');
             companionItem.className = 'companion-item';
+            const today = new Date().toISOString().split('T')[0];
             companionItem.innerHTML = `
-                <input type="text" class="companion-input" placeholder="Nome do acompanhante" required>
+                <div class="companion-input-group">
+                    <input type="text" class="companion-input" placeholder="Nome do acompanhante" required>
+                    <input type="date" class="companion-birthdate" placeholder="Data de nascimento" max="${today}">
+                </div>
                 <button type="button" class="btn-remove-companion" onclick="removeCompanion(this)">×</button>
             `;
             if (companionsList) {
@@ -630,13 +641,24 @@ function setupFormSubmit() {
         
         const attendance = attendanceRadio.value;
         
-        // Coletar acompanhantes se houver
-        const companionInputs = document.querySelectorAll('.companion-input');
+        // Coletar data de nascimento do convidado principal
+        const guestBirthDateEl = document.getElementById('guestBirthDate');
+        const guestBirthDate = guestBirthDateEl ? guestBirthDateEl.value : null;
+        
+        // Coletar acompanhantes se houver (agora com nome e data de nascimento)
+        const companionItems = document.querySelectorAll('.companion-item');
         companions = [];
-        companionInputs.forEach(input => {
-            const name = input.value.trim();
+        companionItems.forEach(item => {
+            const nameInput = item.querySelector('.companion-input');
+            const birthDateInput = item.querySelector('.companion-birthdate');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const birthDate = birthDateInput ? birthDateInput.value : null;
+            
             if (name) {
-                companions.push(name);
+                companions.push({
+                    name: name,
+                    birthDate: birthDate || null
+                });
             }
         });
         
@@ -646,6 +668,7 @@ function setupFormSubmit() {
             name: guestName,
             email: guestEmail,
             phone: guestPhone || null,
+            birthDate: guestBirthDate || null,
             attendance: attendance,
             companions: companions,
             dateAdded: new Date().toISOString()

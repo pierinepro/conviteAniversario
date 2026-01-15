@@ -207,13 +207,43 @@ async function updateAdminStats() {
     }
 }
 
+// Função para calcular idade a partir da data de nascimento
+function calculateAge(birthDate) {
+    if (!birthDate) return '';
+    
+    // Criar data usando fuso horário local para evitar problemas de timezone
+    const birthParts = birthDate.split('-');
+    const birth = new Date(parseInt(birthParts[0]), parseInt(birthParts[1]) - 1, parseInt(birthParts[2]));
+    
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+    
+    return age >= 0 ? age : '';
+}
+
+// Função para formatar data de nascimento
+function formatBirthDate(birthDate) {
+    if (!birthDate) return '';
+    
+    // Criar data usando fuso horário local para evitar problemas de timezone
+    const dateParts = birthDate.split('-');
+    const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+    
+    return date.toLocaleDateString('pt-BR');
+}
+
 // Função para exportar para Excel
 async function exportToExcel() {
     const stats = await exportGuestsList();
     const guests = stats.all;
     
     // Criar cabeçalhos
-    const headers = ['Nome', 'E-mail', 'Telefone', 'Status', 'Tipo', 'Convidado Principal', 'Data de Cadastro'];
+    const headers = ['Nome', 'E-mail', 'Telefone', 'Data de Nascimento', 'Idade', 'Status', 'Tipo', 'Convidado Principal', 'Data de Cadastro'];
     
     // Criar linhas de dados - uma linha para cada pessoa (convidado + acompanhantes)
     const rows = [];
@@ -222,12 +252,16 @@ async function exportToExcel() {
         const status = guest.attendance === 'yes' ? 'Confirmado' : 
                       guest.attendance === 'maybe' ? 'Em Dúvida' : 'Não Comparecerá';
         const date = new Date(guest.dateAdded).toLocaleDateString('pt-BR');
+        const birthDate = guest.birthDate ? formatBirthDate(guest.birthDate) : '';
+        const age = guest.birthDate ? calculateAge(guest.birthDate) : '';
         
         // Linha do convidado principal
         rows.push([
             guest.name || '',
             guest.email || '',
             guest.phone || '',
+            birthDate,
+            age,
             status,
             'Convidado',
             '-', // Convidado principal não tem convidado principal
@@ -237,10 +271,18 @@ async function exportToExcel() {
         // Linhas dos acompanhantes (se houver)
         if (guest.companions && Array.isArray(guest.companions) && guest.companions.length > 0) {
             guest.companions.forEach(companion => {
+                // Verificar se companion é objeto (com nome e birthDate) ou string (legado)
+                const companionName = typeof companion === 'object' ? (companion.name || '') : (companion || '');
+                const companionBirthDate = typeof companion === 'object' ? (companion.birthDate || null) : null;
+                const companionBirthDateFormatted = companionBirthDate ? formatBirthDate(companionBirthDate) : '';
+                const companionAge = companionBirthDate ? calculateAge(companionBirthDate) : '';
+                
                 rows.push([
-                    companion || '',
+                    companionName,
                     guest.email || '', // Mesmo e-mail do convidado principal
                     guest.phone || '', // Mesmo telefone do convidado principal
+                    companionBirthDateFormatted,
+                    companionAge,
                     status,
                     'Acompanhante',
                     guest.name || '', // Nome do convidado principal
@@ -284,10 +326,12 @@ async function exportToExcel() {
         { wch: 25 }, // Nome
         { wch: 30 }, // E-mail
         { wch: 18 }, // Telefone
+        { wch: 18 }, // Data de Nascimento
+        { wch: 8 },  // Idade
         { wch: 15 }, // Status
         { wch: 12 }, // Tipo
         { wch: 25 }, // Convidado Principal
-        { wch: 15 }  // Data
+        { wch: 15 }  // Data de Cadastro
     ];
     ws['!cols'] = colWidths;
     
@@ -332,7 +376,7 @@ if (adminLoginForm) {
                 // Mostrar área administrativa
                 if (adminArea) {
                     adminArea.style.display = 'block';
-                    await updateAdminStats();
+                    await loadAdminData();
                 }
             } catch (error) {
                 // Login falhou
@@ -407,31 +451,45 @@ if (exportExcelBtn) {
     });
 }
 
+// Função para carregar todos os dados do admin
+async function loadAdminData() {
+    try {
+        // Carregar estatísticas
+        await updateAdminStats();
+        
+        // Carregar configurações
+        await loadCompanionLimit();
+        await loadFieldsConfig();
+        
+        // Executar busca inicial (mostra todos os convidados paginados)
+        performSearch();
+    } catch (error) {
+        console.error('Erro ao carregar dados do admin:', error);
+    }
+}
+
 // Verificar se já está autenticado ao carregar a página
 async function checkAuthState() {
-    // Sempre mostrar modal de login inicialmente
+    // Mostrar modal de login inicialmente (será escondido se usuário estiver autenticado)
     if (adminLoginModal) adminLoginModal.style.display = 'flex';
     if (adminArea) adminArea.style.display = 'none';
     
     if (isFirebaseConfigured() && window.firebaseAuth) {
         try {
-            const { onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+            const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
             
-            // Verificar se há usuário autenticado e fazer logout para forçar novo login
-            const currentUser = window.firebaseAuth.currentUser;
-            if (currentUser) {
-                // Fazer logout para forçar novo login
-                await signOut(window.firebaseAuth);
-                console.log('Sessão anterior encerrada. Login necessário.');
-            }
-            
+            // Verificar estado de autenticação
             onAuthStateChanged(window.firebaseAuth, async (user) => {
                 if (user) {
-                    // Usuário autenticado - só mostrar área admin após login explícito via formulário
-                    // Não fazer auto-login aqui
+                    // Usuário autenticado - mostrar área admin
                     console.log('Usuário autenticado:', user.email);
+                    if (adminArea) adminArea.style.display = 'block';
+                    if (adminLoginModal) adminLoginModal.style.display = 'none';
+                    
+                    // Carregar dados do admin
+                    await loadAdminData();
                 } else {
-                    // Usuário não está autenticado
+                    // Usuário não está autenticado - mostrar modal de login
                     if (adminArea) adminArea.style.display = 'none';
                     if (adminLoginModal) adminLoginModal.style.display = 'flex';
                 }
@@ -757,9 +815,12 @@ function displaySearchResults(results) {
         // Adicionar cada acompanhante como item separado
         if (guest.companions && Array.isArray(guest.companions) && guest.companions.length > 0) {
             guest.companions.forEach((companion, index) => {
+                // Verificar se companion é objeto (com nome e birthDate) ou string (legado)
+                const companionName = typeof companion === 'object' ? (companion.name || '') : (companion || '');
                 expandedResults.push({
                     ...guest,
-                    name: companion,
+                    name: companionName,
+                    birthDate: typeof companion === 'object' ? (companion.birthDate || null) : null,
                     mainGuestName: guest.name, // Guardar nome do convidado principal
                     mainGuestId: guest.id || guest.name, // Guardar ID do convidado principal para exclusão
                     isCompanion: true,
@@ -920,10 +981,18 @@ window.editGuest = function(guestId) {
     const nameInput = document.getElementById('editName');
     const emailInput = document.getElementById('editEmail');
     const phoneInput = document.getElementById('editPhone');
+    const birthDateInput = document.getElementById('editBirthDate');
     
     if (nameInput) nameInput.value = guest.name || '';
     if (emailInput) emailInput.value = guest.email || '';
     if (phoneInput) phoneInput.value = guest.phone || '';
+    if (birthDateInput) birthDateInput.value = guest.birthDate || '';
+    
+    // Configurar limite máximo da data de nascimento
+    if (birthDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        birthDateInput.setAttribute('max', today);
+    }
     
     // Selecionar status
     const attendanceRadios = document.querySelectorAll('input[name="editAttendance"]');
@@ -964,13 +1033,28 @@ function addCompanionInput(value = '', index = null) {
     const companionDiv = document.createElement('div');
     companionDiv.className = 'companion-edit-item';
     
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'companion-edit-input';
-    input.value = value;
-    input.placeholder = 'Nome do acompanhante';
+    // Verificar se value é objeto (com nome e birthDate) ou string (legado)
+    const companionName = typeof value === 'object' ? (value.name || '') : (value || '');
+    const companionBirthDate = typeof value === 'object' ? (value.birthDate || '') : '';
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'companion-edit-input';
+    nameInput.value = companionName;
+    nameInput.placeholder = 'Nome do acompanhante';
     if (index !== null) {
-        input.setAttribute('data-index', index);
+        nameInput.setAttribute('data-index', index);
+    }
+    
+    const birthDateInput = document.createElement('input');
+    birthDateInput.type = 'date';
+    birthDateInput.className = 'companion-edit-birthdate';
+    birthDateInput.value = companionBirthDate;
+    birthDateInput.placeholder = 'Data de nascimento';
+    const today = new Date().toISOString().split('T')[0];
+    birthDateInput.setAttribute('max', today);
+    if (index !== null) {
+        birthDateInput.setAttribute('data-index', index);
     }
     
     const removeBtn = document.createElement('button');
@@ -981,7 +1065,8 @@ function addCompanionInput(value = '', index = null) {
         companionDiv.remove();
     };
     
-    companionDiv.appendChild(input);
+    companionDiv.appendChild(nameInput);
+    companionDiv.appendChild(birthDateInput);
     companionDiv.appendChild(removeBtn);
     editCompanionsList.appendChild(companionDiv);
 }
@@ -1032,7 +1117,8 @@ window.deleteGuest = function(guestId) {
             if (companionsCount > 0) {
                 messageHTML += `<br><br><span style="color: #dc3545; font-weight: 600;">⚠️ ATENÇÃO: ${companionsCount} acompanhante(s) também será(ão) excluído(s):</span><br>`;
                 guestToDelete.companions.forEach((companion) => {
-                    messageHTML += `&nbsp;&nbsp;• ${companion}<br>`;
+                    const companionName = typeof companion === 'object' ? (companion.name || '') : (companion || '');
+                    messageHTML += `&nbsp;&nbsp;• ${companionName}<br>`;
                 });
             }
             
@@ -1052,7 +1138,8 @@ window.deleteCompanion = async function(guestId, companionIndex) {
         return;
     }
     
-    const companionName = guest.companions[companionIndex];
+    const companion = guest.companions[companionIndex];
+    const companionName = typeof companion === 'object' ? (companion.name || '') : (companion || '');
     
     if (confirm(`Tem certeza que deseja excluir o acompanhante "${companionName}"?`)) {
         guest.companions.splice(companionIndex, 1);
@@ -1149,6 +1236,7 @@ if (editForm) {
         const nameInput = document.getElementById('editName');
         const emailInput = document.getElementById('editEmail');
         const phoneInput = document.getElementById('editPhone');
+        const birthDateInput = document.getElementById('editBirthDate');
         const attendanceRadio = document.querySelector('input[name="editAttendance"]:checked');
         
         if (!nameInput || !emailInput || !attendanceRadio) {
@@ -1161,17 +1249,25 @@ if (editForm) {
             name: nameInput.value.trim(),
             email: emailInput.value.trim(),
             phone: phoneInput.value.trim() || null,
+            birthDate: birthDateInput ? (birthDateInput.value || null) : null,
             attendance: attendanceRadio.value
         };
         
         // Coletar acompanhantes
         if (editCompanionsList) {
             const companionInputs = editCompanionsList.querySelectorAll('.companion-edit-input');
+            const companionBirthDates = editCompanionsList.querySelectorAll('.companion-edit-birthdate');
             updatedGuest.companions = [];
-            companionInputs.forEach(input => {
-                const name = input.value.trim();
+            
+            companionInputs.forEach((nameInput, index) => {
+                const name = nameInput.value.trim();
                 if (name) {
-                    updatedGuest.companions.push(name);
+                    const birthDateInput = companionBirthDates[index];
+                    const birthDate = birthDateInput ? birthDateInput.value : null;
+                    updatedGuest.companions.push({
+                        name: name,
+                        birthDate: birthDate || null
+                    });
                 }
             });
         } else {

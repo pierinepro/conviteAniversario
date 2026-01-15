@@ -347,7 +347,7 @@ body {
 .hero-image-wrapper {
     position: relative;
     width: 100%;
-    height: 400px;
+    height: 500px;
     overflow: hidden;
     background: linear-gradient(135deg, rgba(232, 196, 184, 0.3) 0%, rgba(245, 230, 211, 0.3) 100%);
 }
@@ -355,13 +355,42 @@ body {
 .hero-image {
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: brightness(1.05) contrast(1.1) saturate(1.15) sepia(0.05);
+    transform: scale(1.05);
+    transition: transform 0.6s ease, filter 0.6s ease;
+    display: block;
+}
+
+.hero-image-wrapper:hover .hero-image {
+    transform: scale(1.08);
+    filter: brightness(1.08) contrast(1.15) saturate(1.2) sepia(0.08);
+}
+
+.hero-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: 
-        linear-gradient(135deg, rgba(232, 196, 184, 0.4) 0%, rgba(245, 230, 211, 0.4) 100%),
-        url('data:image/svg+xml,<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="%23e8c4b8"/><circle cx="200" cy="150" r="80" fill="%23f5e6d3" opacity="0.5"/></svg>');
-    background-size: cover;
-    background-position: center;
-    filter: blur(2px) brightness(0.9);
-    transform: scale(1.1);
+        linear-gradient(135deg, rgba(139, 111, 71, 0.08) 0%, rgba(232, 196, 184, 0.12) 50%, rgba(139, 111, 71, 0.08) 100%),
+        radial-gradient(circle at 50% 50%, transparent 0%, rgba(245, 230, 211, 0.15) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Borda decorativa na parte superior da imagem */
+.hero-image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 165, 116, 0.6) 20%, rgba(139, 111, 71, 0.8) 50%, rgba(212, 165, 116, 0.6) 80%, transparent 100%);
+    z-index: 2;
 }
 
 .torn-paper-edge {
@@ -690,7 +719,8 @@ body {
 
 .form-group input[type="text"],
 .form-group input[type="email"],
-.form-group input[type="tel"] {
+.form-group input[type="tel"],
+.form-group input[type="date"] {
     width: 100%;
     padding: 12px;
     border: 2px solid #e0e0e0;
@@ -702,7 +732,8 @@ body {
 
 .form-group input[type="text"]:focus,
 .form-group input[type="email"]:focus,
-.form-group input[type="tel"]:focus {
+.form-group input[type="tel"]:focus,
+.form-group input[type="date"]:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
@@ -877,12 +908,28 @@ body {
     border-radius: 6px;
 }
 
-.companion-item input {
+.companion-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.companion-item input.companion-input,
+.companion-item input.companion-birthdate {
     flex: 1;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 0.9rem;
+    width: 100%;
+}
+
+.companion-item input.companion-input:focus,
+.companion-item input.companion-birthdate:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.1);
 }
 
 .btn-remove-companion {
@@ -1924,10 +1971,13 @@ body {
     gap: 10px;
     margin-bottom: 10px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
-.companion-edit-input {
+.companion-edit-input,
+.companion-edit-birthdate {
     flex: 1;
+    min-width: 150px;
     padding: 10px;
     border: 2px solid #e0e0e0;
     border-radius: 6px;
@@ -1936,7 +1986,8 @@ body {
     transition: border-color 0.3s ease;
 }
 
-.companion-edit-input:focus {
+.companion-edit-input:focus,
+.companion-edit-birthdate:focus {
     outline: none;
     border-color: #8b6f47;
 }
