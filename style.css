@@ -358,13 +358,20 @@ body {
     object-fit: cover;
     object-position: center;
     filter: brightness(1.05) contrast(1.1) saturate(1.15) sepia(0.05);
-    transform: scale(1.05);
+    transform: scale(1);
     transition: transform 0.6s ease, filter 0.6s ease;
     display: block;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: high-quality;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .hero-image-wrapper:hover .hero-image {
-    transform: scale(1.08);
+    transform: scale(1.02);
     filter: brightness(1.08) contrast(1.15) saturate(1.2) sepia(0.08);
 }
 
