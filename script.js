@@ -570,6 +570,24 @@ if (giftListBtn) {
     });
 }
 
+// Função para copiar código PIX no modal
+function copyPixCodeModal() {
+    const pixCode = document.getElementById('pixCodeModal').textContent;
+    navigator.clipboard.writeText(pixCode).then(function() {
+        const btn = document.querySelector('#pixCodeModal').parentElement.querySelector('.pix-copy-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Copiado!';
+        btn.style.background = '#8b6f47';
+        setTimeout(function() {
+            btn.textContent = originalText;
+            btn.style.background = '#d4a574';
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Erro ao copiar:', err);
+        alert('Erro ao copiar código. Por favor, copie manualmente.');
+    });
+}
+
 // Código do admin foi movido para admin.html e script-admin.js
 
 // Submeter formulário

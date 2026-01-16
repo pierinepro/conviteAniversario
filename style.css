@@ -1326,6 +1326,113 @@ body {
     line-height: 1.6;
 }
 
+/* Seção PIX */
+.pix-section {
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    text-align: center;
+    padding-top: 30px;
+    border-top: 2px solid #e8e8e8;
+}
+
+.pix-message {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.pix-qr-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.pix-qr-code {
+    max-width: 250px;
+    max-height: 250px;
+    width: auto;
+    height: auto;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 10px;
+    background: #ffffff;
+}
+
+.pix-code-container {
+    margin-top: 25px;
+}
+
+.pix-code-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+}
+
+.pix-code-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.pix-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dark);
+    background: #f5f5f5;
+    padding: 12px;
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    word-break: break-all;
+    max-width: 100%;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.pix-copy-btn {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    color: #ffffff;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.pix-copy-btn:hover {
+    background: var(--secondary-color);
+}
+
+.delivery-note {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #e8e8e8;
+    text-align: center;
+}
+
+.delivery-note-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.delivery-address {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    font-weight: 500;
+    line-height: 1.6;
+}
+
 @media (max-width: 768px) {
     .modal-gift-list {
         max-width: 95%;
