@@ -1275,6 +1275,72 @@ body {
     box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
 }
 
+/* Modal de Lista de Presentes */
+.modal-gift-list {
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.gift-list-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.gift-category {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.gift-category:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.gift-category-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.gift-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.gift-list li {
+    padding: 8px 0;
+    padding-left: 0;
+    position: relative;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+    .modal-gift-list {
+        max-width: 95%;
+        padding: 30px 20px;
+    }
+    
+    .gift-list-title {
+        font-size: 1.6rem;
+    }
+    
+    .gift-category-title {
+        font-size: 1.1rem;
+    }
+}
+
 .btn-gift-list:active {
     transform: translateY(0);
 }

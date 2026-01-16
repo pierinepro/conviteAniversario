@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baixar Lista de Presentes</title>
+    <script src="script-admin.js"></script>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <p>Gerando PDF da lista de presentes...</p>
+        <p style="color: #666; font-size: 0.9rem;">Se o download não iniciar automaticamente, <a href="javascript:void(0)" onclick="downloadGiftListPDF()">clique aqui</a>.</p>
+    </div>
+    <script>
+        // Tentar baixar automaticamente quando a página carregar
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof downloadGiftListPDF !== 'undefined') {
+                    // Iniciar o download e fechar imediatamente
+                    downloadGiftListPDF();
+                    // Fechar a janela assim que o download iniciar
+                    setTimeout(function() {
+                        window.close();
+                    }, 500);
+                } else {
+                    // Aguardar um pouco mais se a função ainda não estiver carregada
+                    setTimeout(function() {
+                        if (typeof downloadGiftListPDF !== 'undefined') {
+                            downloadGiftListPDF();
+                            // Fechar após iniciar o download
+                            setTimeout(function() {
+                                window.close();
+                            }, 500);
+                        }
+                    }, 2000);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

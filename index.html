@@ -93,6 +93,10 @@
                 <div class="icon-circle">💕</div>
                 <p class="icon-label">Confirme</p>
             </div>
+            <div class="info-icon-item" id="giftListIcon">
+                <div class="icon-circle">🎁</div>
+                <p class="icon-label">Lista de Presentes</p>
+            </div>
         </section>
 
         <!-- Detalhes Expansíveis -->
@@ -118,7 +122,6 @@
                 </div>
                 <div class="detail-content">
                     <p class="dresscode-text">Roupa Esporte Chique</p>
-                    <p class="dresscode-description">Solicitamos que venham elegantemente vestidos para celebrar conosco este momento especial</p>
                 </div>
             </div>
 
@@ -227,6 +230,117 @@
                 <button class="modal-close" id="closeMaybeModal">×</button>
                 <div class="modal-body">
                     <p class="modal-message">Entendemos sua situação. Pedimos, por gentileza, que nos confirme sua decisão final com até 10 dias de antecedência para que possamos nos organizar da melhor forma. Agradecemos muito a sua compreensão.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Lista de Presentes -->
+        <div id="giftListModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content modal-gift-list">
+                <button class="modal-close" id="closeGiftListModal">×</button>
+                <div class="modal-body">
+                    <h2 class="gift-list-title">💕 Lista de Presentes</h2>
+                    
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">🍽️ Louças e Itens para Mesa</h3>
+                        <ul class="gift-list">
+                            <li>Aparelho de jantar</li>
+                            <li>Faqueiro</li>
+                            <li>Xícaras para café</li>
+                            <li>Xícaras para chá</li>
+                            <li>Taças de vinho</li>
+                            <li>Taças de água</li>
+                            <li>Copos</li>
+                            <li>Jogo de sobremesa</li>
+                            <li>Prato para bolo (boleira)</li>
+                            <li>Porta-condimentos (preto)</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">🍲 Utensílios de Cozinha Funcionais</h3>
+                        <ul class="gift-list">
+                            <li>Jarra de suco (vidro)</li>
+                            <li>Saladeira de vidro</li>
+                            <li>Saladeira com suporte em bambu</li>
+                            <li>Açucareiro de vidro ou inox</li>
+                            <li>Potes herméticos</li>
+                            <li>Bowls de cerâmica para caldos</li>
+                            <li>Conjunto de bowls/tigelas inox com tampa</li>
+                            <li>Organizador de geladeira</li>
+                            <li>Organizador de pia inox</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">🍳 Panelas, Formas e Preparos</h3>
+                        <ul class="gift-list">
+                            <li>Jogo de panelas</li>
+                            <li>Jogo de frigideiras</li>
+                            <li>Panela de pressão 4,5 L</li>
+                            <li>Panela de pressão elétrica (pequena)</li>
+                            <li>Panela de arroz elétrica (pequena)</li>
+                            <li>Panela a vapor</li>
+                            <li>Tapioqueira de ferro fundido</li>
+                            <li>Formas de pudim</li>
+                            <li>Forma de bolo redonda</li>
+                            <li>Forma de bolo retangular</li>
+                            <li>Refratários (Marinex oval + retangular)</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">⚡ Eletrodomésticos</h3>
+                        <ul class="gift-list">
+                            <li>Air fryer</li>
+                            <li>Cafeteira Dolce Gusto</li>
+                            <li>Liquidificador</li>
+                            <li>Batedeira planetária</li>
+                            <li>Multi processador</li>
+                            <li>Torradeira pequena (preta)</li>
+                            <li>Espremedor de frutas</li>
+                            <li>Grill elétrico</li>
+                            <li>Chaleira</li>
+                            <li>Leiteira</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">🧹 Organização e Limpeza</h3>
+                        <ul class="gift-list">
+                            <li>Escorredor de louça slim (Tramontina – aço/polipropileno)</li>
+                            <li>Lixeira inteligente 60 L (preta)</li>
+                            <li>Aspirador de pó (vertical ou robô)</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">🏡 Conforto e Casa</h3>
+                        <ul class="gift-list">
+                            <li>TV Smart 32 polegadas</li>
+                            <li>Ventilador de mesa</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">🛁 Banheiro e Lavanderia</h3>
+                        <ul class="gift-list">
+                            <li>Jogo de toalhas de banho</li>
+                            <li>Jogo de lençol com elástico (Queen)</li>
+                            <li>Kit lavabo</li>
+                            <li>Cesto para banheiro inteligente slim</li>
+                        </ul>
+                    </div>
+
+                    <div class="gift-category">
+                        <h3 class="gift-category-title">👕 Rotina e Facilidades</h3>
+                        <ul class="gift-list">
+                            <li>Tábua de passar slim</li>
+                            <li>Ferro de passar roupa</li>
+                            <li>Garrafa térmica inox (pequena)</li>
+                            <li>Lancheira pequena (preta)</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

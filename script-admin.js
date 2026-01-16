@@ -1627,6 +1627,136 @@ if (saveFieldsConfigBtn) {
     });
 }
 
+// Função para baixar PDF da lista de presentes (disponível globalmente)
+window.downloadGiftListPDF = async function downloadGiftListPDF() {
+    try {
+        // Carregar a biblioteca html2pdf se ainda não estiver carregada
+        if (typeof html2pdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            document.head.appendChild(script);
+            
+            await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+                setTimeout(() => reject(new Error('Timeout ao carregar html2pdf')), 10000);
+            });
+        }
+
+        // Carregar o template da lista de presentes
+        const response = await fetch('gift-list-template.html');
+        if (!response.ok) {
+            throw new Error('Não foi possível carregar gift-list-template.html. Verifique se o arquivo existe.');
+        }
+        const htmlContent = await response.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'fixed';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '0';
+        tempContainer.style.width = '800px';
+        tempContainer.style.height = 'auto';
+        tempContainer.style.minHeight = '1131px';
+        tempContainer.style.overflow = 'visible';
+        tempContainer.style.backgroundColor = '#ffffff';
+        document.body.appendChild(tempContainer);
+        
+        const styles = doc.querySelectorAll('style');
+        styles.forEach(style => {
+            const styleEl = document.createElement('style');
+            styleEl.textContent = style.textContent;
+            tempContainer.appendChild(styleEl);
+        });
+        
+        const fontLinks = doc.querySelectorAll('link[rel="stylesheet"]');
+        fontLinks.forEach(link => {
+            const linkEl = document.createElement('link');
+            linkEl.rel = 'stylesheet';
+            linkEl.href = link.href;
+            document.head.appendChild(linkEl);
+        });
+        
+        const templateElement = doc.getElementById('giftList');
+        if (!templateElement) {
+            document.body.removeChild(tempContainer);
+            throw new Error('Elemento da lista de presentes não encontrado no template');
+        }
+        
+        const clonedElement = templateElement.cloneNode(true);
+        tempContainer.appendChild(clonedElement);
+        
+        await new Promise((resolve) => {
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => {
+                    setTimeout(resolve, 1500);
+                });
+            } else {
+                setTimeout(resolve, 2500);
+            }
+        });
+        
+        if (!clonedElement.offsetHeight || !clonedElement.offsetWidth) {
+            document.body.removeChild(tempContainer);
+            throw new Error('Elemento não está renderizado corretamente');
+        }
+        
+        clonedElement.offsetHeight;
+        
+        const opt = {
+            filename: '💕 Lista de Presentes - Erli e Francisco.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 0.95,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                allowTaint: false,
+                letterRendering: true
+            },
+            jsPDF: {
+                unit: 'px',
+                format: [800, 1131],
+                orientation: 'portrait',
+                compress: true,
+                precision: 16
+            },
+            pagebreak: { 
+                mode: ['avoid-all', 'css', 'legacy']
+            },
+            margin: [0, 0, 0, 0]
+        };
+        
+        const worker = html2pdf()
+            .set(opt)
+            .from(clonedElement);
+        
+        await worker.toPdf().get('pdf').then((pdf) => {
+            // Não remover páginas - manter todas as páginas geradas
+            console.log('Total de páginas geradas:', pdf.internal.getNumberOfPages());
+        }).save();
+        
+        setTimeout(() => {
+            if (tempContainer.parentNode) {
+                document.body.removeChild(tempContainer);
+            }
+            fontLinks.forEach(() => {
+                const lastLink = document.head.querySelector('link[rel="stylesheet"]:last-of-type');
+                if (lastLink && lastLink.href.includes('fonts.googleapis.com')) {
+                    document.head.removeChild(lastLink);
+                }
+            });
+        }, 1000);
+        
+        console.log('PDF da lista de presentes gerado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao gerar PDF da lista de presentes:', error);
+        alert('❌ Erro ao gerar PDF: ' + error.message);
+    }
+}
+
 // Função para baixar PDF do convite
 async function downloadInvitationPDF() {
     try {

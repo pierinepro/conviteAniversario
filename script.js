@@ -138,6 +138,7 @@ let mapLink;
 const locationIcon = document.getElementById('locationIcon');
 const dressIcon = document.getElementById('dressIcon');
 const rsvpIcon = document.getElementById('rsvpIcon');
+const giftListIcon = document.getElementById('giftListIcon');
 const locationCard = document.getElementById('locationCard');
 const dressCard = document.getElementById('dressCard');
 const rsvpCard = document.getElementById('rsvpCard');
@@ -544,11 +545,28 @@ if (maybeModal) {
     });
 }
 
-// Botão de lista de presentes (por enquanto apenas alerta, pode ser expandido depois)
+// Botão de lista de presentes - baixar PDF
 if (giftListBtn) {
-    giftListBtn.addEventListener('click', function() {
-        alert('Lista de presentes será implementada em breve!');
-        // Aqui você pode adicionar a funcionalidade da lista de presentes depois
+    giftListBtn.addEventListener('click', async function() {
+        // Carregar função de download do PDF da lista de presentes
+        if (typeof downloadGiftListPDF === 'undefined') {
+            // Se a função não estiver disponível, tentar carregar do script-admin.js
+            const script = document.createElement('script');
+            script.src = 'script-admin.js';
+            document.head.appendChild(script);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        
+        if (typeof downloadGiftListPDF !== 'undefined') {
+            await downloadGiftListPDF();
+        } else {
+            // Fallback: abrir modal se a função não estiver disponível
+            const giftListModal = document.getElementById('giftListModal');
+            if (giftListModal) {
+                giftListModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
     });
 }
 
@@ -921,6 +939,40 @@ if (locationIcon) {
 if (dressIcon) {
     dressIcon.addEventListener('click', function() {
         toggleCard(dressCard, [locationCard, rsvpCard]);
+    });
+}
+
+if (giftListIcon) {
+    giftListIcon.addEventListener('click', function() {
+        // Abrir modal de lista de presentes
+        const giftListModal = document.getElementById('giftListModal');
+        if (giftListModal) {
+            giftListModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    });
+}
+
+// Fechar modal de lista de presentes
+const closeGiftListModal = document.getElementById('closeGiftListModal');
+if (closeGiftListModal) {
+    closeGiftListModal.addEventListener('click', function() {
+        const giftListModal = document.getElementById('giftListModal');
+        if (giftListModal) {
+            giftListModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+// Fechar modal ao clicar fora
+const giftListModal = document.getElementById('giftListModal');
+if (giftListModal) {
+    giftListModal.addEventListener('click', function(e) {
+        if (e.target === giftListModal) {
+            giftListModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
     });
 }
 

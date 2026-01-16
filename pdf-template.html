@@ -31,35 +31,122 @@
             margin: 0 auto;
             background: #ffffff;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: none;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 10px 60px 40px 60px;
+            padding: 10px 60px 20px 60px;
         }
 
-        /* ===== DECORAÇÃO FLORAL (SIMULADA COM EMOJIS/CSS) ===== */
-        .floral-header {
+        /* ===== DECORAÇÕES FLORAIS COM IMAGENS ===== */
+        .floral-decoration {
             position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 3.5rem;
-            opacity: 0.2;
-            white-space: nowrap;
             pointer-events: none;
+            z-index: 0;
+            opacity: 0.3;
         }
 
-        .floral-footer {
-            position: absolute;
-            bottom: -20px;
+        .floral-decoration img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Flores horizontais no topo e rodapé */
+        .floral-top {
+            top: 195px;
+            left: 50%;
+            transform: translateX(-50%) rotate(180deg);
+            width: 600px;
+            height: auto;
+            max-height: 150px;
+        }
+
+        .floral-bottom {
+            bottom: 205px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 6rem;
-            opacity: 0.2;
-            white-space: nowrap;
+            width: 600px;
+            height: auto;
+            max-height: 150px;
+        }
+
+        /* Flores nos cantos */
+        .floral-corner {
+            width: 120px;
+            height: 120px;
+            opacity: 0.25;
+        }
+
+        .floral-corner-top-left {
+            top: 20px;
+            left: 20px;
+            transform: rotate(90deg);
+        }
+
+        .floral-corner-top-right {
+            top: 20px;
+            right: 20px;
+        }
+
+        .floral-corner-bottom-left {
+            bottom: 20px;
+            left: 20px;
+            transform: rotate(180deg);
+        }
+
+        .floral-corner-bottom-right {
+            bottom: 20px;
+            right: 20px;
+            transform: rotate(-90deg);
+        }
+
+
+        /* Flores internas decorativas */
+        .floral-inner {
+            position: absolute;
             pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .floral-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .floral-inner-top-left {
+            top: 80px;
+            left: 30px;
+            width: 100px;
+            height: 100px;
+            transform: rotate(45deg);
+        }
+
+        .floral-inner-top-right {
+            top: 80px;
+            right: 30px;
+            width: 100px;
+            height: 100px;
+            transform: rotate(-45deg);
+        }
+
+        .floral-inner-bottom-left {
+            bottom: 200px;
+            left: 30px;
+            width: 100px;
+            height: 100px;
+            transform: rotate(135deg);
+        }
+
+        .floral-inner-bottom-right {
+            bottom: 200px;
+            right: 30px;
+            width: 100px;
+            height: 100px;
+            transform: rotate(-135deg);
         }
 
         /* ===== CONTEÚDO ===== */
@@ -71,7 +158,7 @@
             align-items: center;
             justify-content: flex-start;
             border: 1px solid rgba(139,111,71,0.1);
-            padding: 5px 40px 40px 40px;
+            padding: 30px 40px 20px 40px;
             position: relative;
             z-index: 1;
         }
@@ -80,6 +167,7 @@
             text-align: center;
             margin-bottom: 25px;
             margin-top: 0;
+            padding-top: 50px;
         }
 
         .couple-names {
@@ -172,7 +260,7 @@
             color: #8b6f47;
             text-transform: uppercase;
             letter-spacing: 4px;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
 
         /* ===== ÍCONES INTERATIVOS ===== */
@@ -180,7 +268,7 @@
             display: flex;
             justify-content: space-around;
             width: 100%;
-            margin-top: 40px;
+            margin-top: 20px;
         }
 
         .icon-item {
@@ -220,11 +308,17 @@
         }
 
         .click-hint {
-            margin-top: 30px;
+            margin-top: 15px;
+            margin-bottom: 0;
             font-size: 0.7rem;
             color: #999;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        /* Remover emojis do hint */
+        .click-hint::before {
+            content: "→ ";
         }
 
         @media print {
@@ -236,10 +330,14 @@
 
 <body>
     <div class="pdf-container" id="convite">
-        <!-- Decorações Florais -->
-        <div class="floral-header">🌿🌸🌿🌸🌿</div>
-        <div class="floral-footer">🌿🌸🌿🌸🌿</div>
-
+        <!-- Decorações Florais Externas -->
+        <div class="floral-decoration floral-top">
+            <img src="images/flortop.png" alt="Flores decorativas">
+        </div>
+        <div class="floral-decoration floral-bottom">
+            <img src="images/florbaixo.png" alt="Flores decorativas">
+        </div>
+        
         <div class="content">
             <div class="names-section">
                 <h1 class="couple-names">Erli</h1>
@@ -271,13 +369,13 @@
                     <div class="icon-label">Confirme sua<br>Presença</div>
                 </a>
 
-                <a href="https://erlifrancisco.netlify.app/" class="icon-item" target="_blank">
+                <a href="download-gift-list.html" class="icon-item" target="_blank">
                     <div class="icon-circle">🎁</div>
                     <div class="icon-label">Lista de<br>Presentes</div>
                 </a>
             </div>
 
-            <p class="click-hint">👆 Clique nos ícones para acessar</p>
+            <p class="click-hint">Clique nos ícones para acessar</p>
         </div>
     </div>
 </body>

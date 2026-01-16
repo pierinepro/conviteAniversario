@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Presentes - Erli & Francisco</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #ffffff;
+            padding: 20px;
+            color: #2c2c2c;
+            margin: 0;
+        }
+
+        /* ===== PDF CONTAINER (A4 proporção) ===== */
+        .pdf-container {
+            width: 800px;
+            min-height: 1131px;
+            margin: 0 auto;
+            background: #ffffff;
+            position: relative;
+            overflow: visible;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 60px;
+        }
+
+        /* ===== CONTEÚDO ===== */
+        .content {
+            width: 100%;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .main-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3rem;
+            color: #d4a574;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: #8b6f47;
+            font-style: italic;
+        }
+
+        .gift-category {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .category-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: #d4a574;
+            margin-bottom: 6px;
+            font-weight: 600;
+            border-bottom: 2px solid #d4a574;
+            padding-bottom: 4px;
+        }
+
+        .gift-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .gift-list li {
+            padding: 3px 0;
+            color: #2c2c2c;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            padding-left: 0;
+        }
+
+        @media print {
+            body { padding: 0; background: #fff; }
+            .pdf-container { box-shadow: none; border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="pdf-container" id="giftList">
+        <div class="content">
+            <div class="title-section">
+                <h1 class="main-title">💕 Lista de Presentes</h1>
+                <p class="subtitle">Erli & Francisco</p>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">🍽️ Louças e Itens para Mesa</h3>
+                <ul class="gift-list">
+                    <li>Aparelho de jantar</li>
+                    <li>Faqueiro</li>
+                    <li>Xícaras para café</li>
+                    <li>Xícaras para chá</li>
+                    <li>Taças de vinho</li>
+                    <li>Taças de água</li>
+                    <li>Copos</li>
+                    <li>Jogo de sobremesa</li>
+                    <li>Prato para bolo (boleira)</li>
+                    <li>Porta-condimentos (preto)</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">🍲 Utensílios de Cozinha Funcionais</h3>
+                <ul class="gift-list">
+                    <li>Jarra de suco (vidro)</li>
+                    <li>Saladeira de vidro</li>
+                    <li>Saladeira com suporte em bambu</li>
+                    <li>Açucareiro de vidro ou inox</li>
+                    <li>Potes herméticos</li>
+                    <li>Bowls de cerâmica para caldos</li>
+                    <li>Conjunto de bowls/tigelas inox com tampa</li>
+                    <li>Organizador de geladeira</li>
+                    <li>Organizador de pia inox</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">🍳 Panelas, Formas e Preparos</h3>
+                <ul class="gift-list">
+                    <li>Jogo de panelas</li>
+                    <li>Jogo de frigideiras</li>
+                    <li>Panela de pressão 4,5 L</li>
+                    <li>Panela de pressão elétrica (pequena)</li>
+                    <li>Panela de arroz elétrica (pequena)</li>
+                    <li>Panela a vapor</li>
+                    <li>Tapioqueira de ferro fundido</li>
+                    <li>Formas de pudim</li>
+                    <li>Forma de bolo redonda</li>
+                    <li>Forma de bolo retangular</li>
+                    <li>Refratários (Marinex oval + retangular)</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">⚡ Eletrodomésticos</h3>
+                <ul class="gift-list">
+                    <li>Air fryer</li>
+                    <li>Cafeteira Dolce Gusto</li>
+                    <li>Liquidificador</li>
+                    <li>Batedeira planetária</li>
+                    <li>Multi processador</li>
+                    <li>Torradeira pequena (preta)</li>
+                    <li>Espremedor de frutas</li>
+                    <li>Grill elétrico</li>
+                    <li>Chaleira</li>
+                    <li>Leiteira</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">🧹 Organização e Limpeza</h3>
+                <ul class="gift-list">
+                    <li>Escorredor de louça slim (Tramontina – aço/polipropileno)</li>
+                    <li>Lixeira inteligente 60 L (preta)</li>
+                    <li>Aspirador de pó (vertical ou robô)</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">🏡 Conforto e Casa</h3>
+                <ul class="gift-list">
+                    <li>TV Smart 32 polegadas</li>
+                    <li>Ventilador de mesa</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">🛁 Banheiro e Lavanderia</h3>
+                <ul class="gift-list">
+                    <li>Jogo de toalhas de banho</li>
+                    <li>Jogo de lençol com elástico (Queen)</li>
+                    <li>Kit lavabo</li>
+                    <li>Cesto para banheiro inteligente slim</li>
+                </ul>
+            </div>
+
+            <div class="gift-category">
+                <h3 class="category-title">👕 Rotina e Facilidades</h3>
+                <ul class="gift-list">
+                    <li>Tábua de passar slim</li>
+                    <li>Ferro de passar roupa</li>
+                    <li>Garrafa térmica inox (pequena)</li>
+                    <li>Lancheira pequena (preta)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
