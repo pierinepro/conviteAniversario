@@ -28,18 +28,44 @@ async function saveGuestToFirestore(guest) {
         try {
             const { collection, addDoc, setDoc, doc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
             
-            // Verificar se o convidado já existe (por nome)
             const guestsRef = collection(window.firebaseDb, 'guests');
-            const q = query(guestsRef, where('name', '==', guest.name));
-            const querySnapshot = await getDocs(q);
             
-            if (!querySnapshot.empty) {
-                // Atualizar documento existente
-                const docRef = querySnapshot.docs[0];
-                await setDoc(doc(guestsRef, docRef.id), guest, { merge: true });
+            // Se o convidado tem um ID do Firestore (id ou firestoreId), atualizar diretamente
+            const firestoreId = guest.id || guest.firestoreId;
+            
+            // Validar se o ID é uma string válida
+            if (firestoreId && typeof firestoreId === 'string' && firestoreId.length > 0) {
+                // Remover o id do objeto antes de salvar (não deve ser salvo como campo)
+                const { id, firestoreId: _, ...guestData } = guest;
+                await setDoc(doc(guestsRef, firestoreId), guestData, { merge: true });
+                console.log('Convidado atualizado pelo ID:', firestoreId);
             } else {
-                // Adicionar novo documento
-                await addDoc(guestsRef, guest);
+                // Se não tem ID válido, verificar se o convidado já existe (por nome)
+                if (guest.name && guest.name.trim()) {
+                    const q = query(guestsRef, where('name', '==', guest.name.trim()));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        // Atualizar documento existente
+                        const docRef = querySnapshot.docs[0];
+                        const { id, firestoreId: _, ...guestData } = guest;
+                        guest.id = docRef.id; // Salvar o ID para futuras atualizações
+                        await setDoc(doc(guestsRef, docRef.id), guestData, { merge: true });
+                        console.log('Convidado atualizado pelo nome:', docRef.id);
+                    } else {
+                        // Adicionar novo documento
+                        const { id, firestoreId: _, ...guestData } = guest;
+                        const docRef = await addDoc(guestsRef, guestData);
+                        guest.id = docRef.id; // Salvar o ID
+                        console.log('Novo convidado criado:', docRef.id);
+                    }
+                } else {
+                    // Se não tem nome, criar novo documento
+                    const { id, firestoreId: _, ...guestData } = guest;
+                    const docRef = await addDoc(guestsRef, guestData);
+                    guest.id = docRef.id; // Salvar o ID
+                    console.log('Novo convidado criado (sem nome):', docRef.id);
+                }
             }
             
             // Também salvar no localStorage como backup
@@ -49,7 +75,7 @@ async function saveGuestToFirestore(guest) {
             console.error('Erro ao salvar no Firestore:', error);
             // Fallback para localStorage
             saveToLocalStorage();
-            return false;
+            throw error; // Re-lançar o erro para que seja capturado no handleEditSubmit
         }
     } else {
         // Fallback para localStorage se Firebase não estiver configurado
@@ -157,6 +183,9 @@ const adminArea = document.getElementById('adminArea');
 const adminLoginForm = document.getElementById('adminLoginForm');
 const adminError = document.getElementById('adminError');
 const adminLogout = document.getElementById('adminLogout');
+const adminLogoutMobile = document.getElementById('adminLogoutMobile');
+const adminMenuToggle = document.getElementById('adminMenuToggle');
+const adminMobileMenu = document.getElementById('adminMobileMenu');
 const exportExcelBtn = document.getElementById('exportExcelBtn');
 const clearListBtn = document.getElementById('clearListBtn');
 const searchInput = document.getElementById('searchInput');
@@ -169,6 +198,7 @@ const companionLimitInput = document.getElementById('companionLimit');
 const saveCompanionLimitBtn = document.getElementById('saveCompanionLimitBtn');
 const enableEmailField = document.getElementById('enableEmailField');
 const enablePhoneField = document.getElementById('enablePhoneField');
+const enableBirthDateField = document.getElementById('enableBirthDateField');
 const saveFieldsConfigBtn = document.getElementById('saveFieldsConfigBtn');
 
 // Modais
@@ -423,6 +453,50 @@ if (adminLoginForm) {
 }
 
 // Logout admin
+// Menu Hambúrguer
+if (adminMenuToggle && adminMobileMenu) {
+    adminMenuToggle.addEventListener('click', function() {
+        adminMenuToggle.classList.toggle('active');
+        adminMobileMenu.classList.toggle('active');
+    });
+    
+    // Fechar menu ao clicar fora
+    document.addEventListener('click', function(event) {
+        if (!adminMenuToggle.contains(event.target) && !adminMobileMenu.contains(event.target)) {
+            adminMenuToggle.classList.remove('active');
+            adminMobileMenu.classList.remove('active');
+        }
+    });
+}
+
+// Logout Mobile
+if (adminLogoutMobile) {
+    adminLogoutMobile.addEventListener('click', async function() {
+        // Fazer logout do Firebase se estiver autenticado
+        if (isFirebaseConfigured() && window.firebaseAuth) {
+            try {
+                const { signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                await signOut(window.firebaseAuth);
+            } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+            }
+        }
+        
+        // Limpar localStorage
+        localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminEmail');
+        
+        // Fechar menu
+        if (adminMenuToggle && adminMobileMenu) {
+            adminMenuToggle.classList.remove('active');
+            adminMobileMenu.classList.remove('active');
+        }
+        
+        // Redirecionar para login
+        window.location.href = 'admin.html';
+    });
+}
+
 if (adminLogout) {
     adminLogout.addEventListener('click', async function() {
         // Fazer logout do Firebase se estiver autenticado
@@ -837,12 +911,70 @@ function displaySearchResults(results) {
         <p>Mostrando ${startIndex + 1} - ${Math.min(endIndex, results.length)} de ${results.length} resultado(s)</p>
     </div>`;
     
+    // Função auxiliar para calcular idade
+    function calculateAge(birthDate) {
+        if (!birthDate) return null;
+        try {
+            const birth = new Date(birthDate);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // Função auxiliar para formatar data de nascimento
+    function formatBirthDate(birthDate) {
+        if (!birthDate) return null;
+        try {
+            // Se a data está no formato YYYY-MM-DD, usar componentes diretamente para evitar problemas de fuso horário
+            if (typeof birthDate === 'string' && birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = birthDate.split('-');
+                // Criar data usando componentes locais (sem conversão de fuso horário)
+                const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                return date.toLocaleDateString('pt-BR');
+            } else {
+                // Para outros formatos, usar a data diretamente
+                const date = new Date(birthDate);
+                // Verificar se a data é válida
+                if (isNaN(date.getTime())) return null;
+                return date.toLocaleDateString('pt-BR');
+            }
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // Função auxiliar para formatar idade no formato solicitado
+    function formatAgeWithBirthDate(birthDate) {
+        if (!birthDate) return null;
+        const formattedBirthDate = formatBirthDate(birthDate);
+        const age = calculateAge(birthDate);
+        if (formattedBirthDate && age !== null) {
+            return `${formattedBirthDate} - ${age} anos`;
+        }
+        return null;
+    }
+    
     expandedResults.forEach(item => {
-        const status = item.attendance === 'yes' ? 'Confirmado' : 
+        const status = item.attendance === 'yes' ? 'Confirmado' :
                       item.attendance === 'maybe' ? 'Em Dúvida' : 'Não Comparecerá';
         const statusIcon = item.attendance === 'yes' ? '✅' : 
                           item.attendance === 'maybe' ? '❓' : '❌';
         const date = new Date(item.dateAdded).toLocaleDateString('pt-BR');
+        
+        // Formatar idade com data de nascimento no formato solicitado
+        const birthDate = item.birthDate || null;
+        const ageText = formatAgeWithBirthDate(birthDate);
+        
+        // Verificar se e-mail e telefone estão preenchidos
+        const hasEmail = item.email && item.email.trim() !== '';
+        const hasPhone = item.phone && item.phone.trim() !== '';
         
         if (item.isCompanion) {
             // Item é um acompanhante
@@ -852,8 +984,9 @@ function displaySearchResults(results) {
                     <div class="result-info">
                         <h4>${item.name} <span class="companion-badge">Acompanhante</span></h4>
                         <p class="companion-main-guest"><strong>Convidado Principal:</strong> ${mainGuestName}</p>
-                        <p><strong>E-mail:</strong> ${item.email || 'Não informado'}</p>
-                        <p><strong>Telefone:</strong> ${item.phone || 'Não informado'}</p>
+                        ${hasEmail ? `<p><strong>E-mail:</strong> ${item.email}</p>` : ''}
+                        ${hasPhone ? `<p><strong>Telefone:</strong> ${item.phone}</p>` : ''}
+                        ${ageText ? `<p><strong>Idade:</strong> ${ageText}</p>` : ''}
                         <p><strong>Status:</strong> ${statusIcon} ${status}</p>
                         <p><strong>Data:</strong> ${date}</p>
                     </div>
@@ -869,8 +1002,9 @@ function displaySearchResults(results) {
                 <div class="result-item">
                     <div class="result-info">
                         <h4>${item.name || 'Sem nome'}</h4>
-                        <p><strong>E-mail:</strong> ${item.email || 'Não informado'}</p>
-                        <p><strong>Telefone:</strong> ${item.phone || 'Não informado'}</p>
+                        ${hasEmail ? `<p><strong>E-mail:</strong> ${item.email}</p>` : ''}
+                        ${hasPhone ? `<p><strong>Telefone:</strong> ${item.phone}</p>` : ''}
+                        ${ageText ? `<p><strong>Idade:</strong> ${ageText}</p>` : ''}
                         <p><strong>Status:</strong> ${statusIcon} ${status}</p>
                         <p><strong>Data:</strong> ${date}</p>
                         ${companionsCount > 0 ? `<p><strong>Acompanhantes:</strong> ${companionsCount} pessoa(s)</p>` : ''}
@@ -975,7 +1109,13 @@ window.editGuest = function(guestId) {
     }
     
     console.log('Convidado encontrado:', guest);
+    console.log('ID do convidado encontrado:', guest.id);
     guestToEdit = guest;
+    
+    // Garantir que o ID seja preservado
+    if (!guestToEdit.id && guestToEdit.firestoreId) {
+        guestToEdit.id = guestToEdit.firestoreId;
+    }
     
     // Preencher formulário de edição
     const nameInput = document.getElementById('editName');
@@ -1220,71 +1360,105 @@ if (addEditCompanionBtn) {
     });
 }
 
-// Salvar edição
+// Salvar edição - Registrar após DOM carregar
+document.addEventListener('DOMContentLoaded', function() {
+    const editFormElement = document.getElementById('editForm');
+    if (editFormElement) {
+        console.log('Formulário de edição encontrado e registrado');
+        editFormElement.addEventListener('submit', handleEditSubmit);
+    } else {
+        console.error('Formulário de edição não encontrado no DOMContentLoaded!');
+    }
+});
+
+// Também tentar registrar imediatamente (caso o DOM já esteja carregado)
 if (editForm) {
-    editForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    console.log('Formulário de edição encontrado imediatamente');
+    editForm.addEventListener('submit', handleEditSubmit);
+}
+
+async function handleEditSubmit(e) {
+    e.preventDefault();
+    console.log('Formulário de edição submetido');
+    
+    if (!guestToEdit) {
+        console.error('guestToEdit não definido');
+        showEditMessage('Erro: Convidado não encontrado para edição!', 'error');
+        return;
+    }
+    
+    console.log('Salvando edição do convidado:', guestToEdit);
+    
+    // Coletar dados do formulário
+    const nameInput = document.getElementById('editName');
+    const emailInput = document.getElementById('editEmail');
+    const phoneInput = document.getElementById('editPhone');
+    const birthDateInput = document.getElementById('editBirthDate');
+    const attendanceRadio = document.querySelector('input[name="editAttendance"]:checked');
+    
+    console.log('Inputs encontrados:', {
+        nameInput: !!nameInput,
+        emailInput: !!emailInput,
+        phoneInput: !!phoneInput,
+        birthDateInput: !!birthDateInput,
+        attendanceRadio: !!attendanceRadio
+    });
+    
+    // Validação básica - apenas verificar se os elementos existem
+    if (!nameInput || !emailInput) {
+        console.error('Campos não encontrados');
+        showEditMessage('Erro: Campos do formulário não encontrados!', 'error');
+        return;
+    }
+    
+    console.log('Criando updatedGuest...');
+    console.log('guestToEdit.id:', guestToEdit.id);
+    
+    // Preservar o ID do Firestore mesmo se o nome for alterado
+    // IMPORTANTE: O ID deve ser preservado ANTES de qualquer outra propriedade
+    const originalId = guestToEdit.id || guestToEdit.firestoreId || null;
+    console.log('ID original preservado:', originalId);
+    
+    const updatedGuest = {
+        ...guestToEdit,
+        id: originalId, // GARANTIR que o ID seja preservado explicitamente ANTES de tudo
+        name: nameInput.value.trim() || null,
+        email: emailInput.value.trim() || null,
+        phone: phoneInput.value.trim() || null,
+        birthDate: birthDateInput ? (birthDateInput.value || null) : null,
+        attendance: attendanceRadio ? attendanceRadio.value : null
+    };
+    
+    console.log('updatedGuest criado com ID:', updatedGuest.id);
+    console.log('updatedGuest completo:', updatedGuest);
+    
+    // Coletar acompanhantes
+    if (editCompanionsList) {
+        const companionInputs = editCompanionsList.querySelectorAll('.companion-edit-input');
+        const companionBirthDates = editCompanionsList.querySelectorAll('.companion-edit-birthdate');
+        updatedGuest.companions = [];
         
-        if (!guestToEdit) {
-            alert('Erro: Convidado não encontrado para edição!');
-            return;
-        }
-        
-        console.log('Salvando edição do convidado:', guestToEdit);
-        
-        // Coletar dados do formulário
-        const nameInput = document.getElementById('editName');
-        const emailInput = document.getElementById('editEmail');
-        const phoneInput = document.getElementById('editPhone');
-        const birthDateInput = document.getElementById('editBirthDate');
-        const attendanceRadio = document.querySelector('input[name="editAttendance"]:checked');
-        
-        if (!nameInput || !emailInput || !attendanceRadio) {
-            alert('Erro: Campos obrigatórios não encontrados!');
-            return;
-        }
-        
-        const updatedGuest = {
-            ...guestToEdit,
-            name: nameInput.value.trim(),
-            email: emailInput.value.trim(),
-            phone: phoneInput.value.trim() || null,
-            birthDate: birthDateInput ? (birthDateInput.value || null) : null,
-            attendance: attendanceRadio.value
-        };
-        
-        // Coletar acompanhantes
-        if (editCompanionsList) {
-            const companionInputs = editCompanionsList.querySelectorAll('.companion-edit-input');
-            const companionBirthDates = editCompanionsList.querySelectorAll('.companion-edit-birthdate');
-            updatedGuest.companions = [];
-            
-            companionInputs.forEach((nameInput, index) => {
-                const name = nameInput.value.trim();
-                if (name) {
-                    const birthDateInput = companionBirthDates[index];
-                    const birthDate = birthDateInput ? birthDateInput.value : null;
-                    updatedGuest.companions.push({
-                        name: name,
-                        birthDate: birthDate || null
-                    });
-                }
-            });
-        } else {
-            updatedGuest.companions = guestToEdit.companions || [];
-        }
-        
-        console.log('Dados atualizados:', updatedGuest);
-        
-        // Salvar no Firestore
-        try {
-            await saveGuestToFirestore(updatedGuest);
-            console.log('Convidado salvo no Firestore');
-        } catch (error) {
-            console.error('Erro ao salvar no Firestore:', error);
-            alert('Erro ao salvar alterações. Tente novamente.');
-            return;
-        }
+        companionInputs.forEach((nameInput, index) => {
+            const name = nameInput.value.trim();
+            if (name) {
+                const birthDateInput = companionBirthDates[index];
+                const birthDate = birthDateInput ? birthDateInput.value : null;
+                updatedGuest.companions.push({
+                    name: name,
+                    birthDate: birthDate || null
+                });
+            }
+        });
+    } else {
+        updatedGuest.companions = guestToEdit.companions || [];
+    }
+    
+    console.log('Dados atualizados:', updatedGuest);
+    
+    // Salvar no Firestore
+    try {
+        await saveGuestToFirestore(updatedGuest);
+        console.log('Convidado salvo no Firestore');
         
         // Atualizar lista local
         const index = guestsList.findIndex(g => {
@@ -1302,17 +1476,60 @@ if (editForm) {
             console.log('Convidado adicionado à lista local');
         }
         
-        // Fechar modal e atualizar
-        guestToEdit = null;
-        if (editModal) {
-            editModal.style.display = 'none';
-        }
+        // Mostrar mensagem de sucesso ANTES de fechar o modal
+        showEditMessage('Convidado atualizado com sucesso!', 'success');
         
         await updateAdminStats();
         performSearch(); // Atualizar resultados da busca
         
-        alert('Convidado atualizado com sucesso!');
-    });
+        // NÃO fechar o modal imediatamente para mostrar a mensagem
+        // Fechar modal apenas antes de recarregar
+        setTimeout(() => {
+            guestToEdit = null;
+            if (editModal) {
+                editModal.style.display = 'none';
+            }
+        }, 3500);
+        
+        // Recarregar a página após salvar (apenas em caso de sucesso)
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    } catch (error) {
+        console.error('Erro ao salvar no Firestore:', error);
+        // Mostrar mensagem de erro detalhada
+        const errorMessage = error.message || 'Erro ao salvar alterações. Tente novamente.';
+        showEditMessage(`Erro: ${errorMessage}`, 'error');
+        // NÃO recarregar a página em caso de erro para que o usuário possa ver a mensagem
+    }
+}
+
+// Função para exibir mensagens na modal de edição
+function showEditMessage(message, type = 'success') {
+    console.log('showEditMessage chamado:', message, type);
+    const messageElement = document.getElementById('editMessage');
+    console.log('Elemento encontrado:', !!messageElement);
+    
+    if (messageElement) {
+        messageElement.textContent = message;
+        messageElement.className = 'edit-message ' + type;
+        messageElement.style.display = 'block';
+        messageElement.style.visibility = 'visible';
+        messageElement.style.opacity = '1';
+        
+        console.log('Mensagem exibida:', messageElement.textContent, messageElement.className);
+        
+        // Remover mensagem após 5 segundos (aumentado para dar mais tempo de visualização)
+        setTimeout(() => {
+            if (messageElement) {
+                messageElement.style.display = 'none';
+                messageElement.textContent = '';
+                messageElement.className = 'edit-message';
+            }
+        }, 5000);
+    } else {
+        console.error('Elemento editMessage não encontrado!');
+    }
 }
 
 // Função para excluir convidado do Firestore
@@ -1507,10 +1724,12 @@ async function loadFieldsConfig() {
     // Fallback para localStorage
     const storedEmail = localStorage.getItem('enableEmailField');
     const storedPhone = localStorage.getItem('enablePhoneField');
+    const storedBirthDate = localStorage.getItem('enableBirthDateField');
     
     // Se não houver valor salvo, usar padrão true (marcado)
     const emailValue = storedEmail === null ? true : storedEmail !== 'false';
     const phoneValue = storedPhone === null ? true : storedPhone !== 'false';
+    const birthDateValue = storedBirthDate === null ? true : storedBirthDate !== 'false';
     
     if (enableEmailField) {
         enableEmailField.checked = emailValue;
@@ -1518,10 +1737,14 @@ async function loadFieldsConfig() {
     if (enablePhoneField) {
         enablePhoneField.checked = phoneValue;
     }
+    if (enableBirthDateField) {
+        enableBirthDateField.checked = birthDateValue;
+    }
     
     return {
         enableEmail: emailValue,
-        enablePhone: phoneValue
+        enablePhone: phoneValue,
+        enableBirthDate: birthDateValue
     };
 }
 
@@ -1529,15 +1752,18 @@ async function loadFieldsConfig() {
 async function saveFieldsConfig() {
     const emailEnabled = enableEmailField ? enableEmailField.checked : true;
     const phoneEnabled = enablePhoneField ? enablePhoneField.checked : true;
+    const birthDateEnabled = enableBirthDateField ? enableBirthDateField.checked : true;
     
     const config = {
         enableEmail: emailEnabled,
-        enablePhone: phoneEnabled
+        enablePhone: phoneEnabled,
+        enableBirthDate: birthDateEnabled
     };
     
     // Sempre salvar no localStorage primeiro (funciona sempre)
     localStorage.setItem('enableEmailField', emailEnabled.toString());
     localStorage.setItem('enablePhoneField', phoneEnabled.toString());
+    localStorage.setItem('enableBirthDateField', birthDateEnabled.toString());
     
     if (isFirebaseConfigured()) {
         try {

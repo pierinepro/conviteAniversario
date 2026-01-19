@@ -26,6 +26,128 @@ body {
 }
 
 /* Link Admin */
+/* Menu Hambúrguer Mobile - Index */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10001;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 35px;
+    height: 35px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #8b6f47;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+}
+
+.mobile-menu-toggle.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-menu-toggle span {
+    width: 100%;
+    height: 3px;
+    background: #8b6f47;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.mobile-menu-toggle.active {
+    background: #8b6f47;
+}
+
+.mobile-menu-toggle.active span {
+    background: #fff;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(8px, -8px);
+}
+
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 10000;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    gap: 10px;
+    min-width: 200px;
+    animation: slideDown 0.3s ease;
+}
+
+.mobile-menu.active {
+    display: flex;
+}
+
+.mobile-menu-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #8b6f47;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    border: 2px solid #8b6f47;
+    background: transparent;
+    text-align: center;
+    font-weight: 500;
+}
+
+.mobile-menu-item:hover {
+    background: #8b6f47;
+    color: #fff;
+}
+
+/* Link Admin Footer - Desktop */
+.admin-link-footer {
+    display: block;
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.7rem;
+    color: #999;
+    text-decoration: none;
+    font-weight: 300;
+    letter-spacing: 1px;
+    opacity: 0.4;
+    transition: opacity 0.3s ease, color 0.3s ease;
+    text-transform: lowercase;
+    font-family: 'Poppins', sans-serif;
+}
+
+.admin-link-footer:hover {
+    opacity: 0.7;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .admin-link-footer {
+        display: none;
+    }
+}
+
 .admin-link {
     position: fixed;
     top: 15px;
@@ -520,10 +642,14 @@ body {
     padding: 40px 20px;
     background: #faf8f5;
     flex-wrap: wrap;
+    align-items: flex-start;
 }
 
 .info-icon-item {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     cursor: pointer;
     transition: transform 0.3s ease;
     max-width: 120px;
@@ -918,8 +1044,21 @@ body {
 .companion-input-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 12px;
     flex: 1;
+}
+
+.companion-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.companion-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #8b6f47;
+    font-family: 'Poppins', sans-serif;
 }
 
 .companion-item input.companion-input,
@@ -1195,9 +1334,30 @@ body {
     padding: 40px;
     max-width: 500px;
     width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
     position: relative;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: slideUp 0.3s ease;
+}
+
+/* Estilo da barra de rolagem para modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #d4a574;
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #c9a961;
 }
 
 @keyframes slideUp {
@@ -1254,6 +1414,61 @@ body {
     text-align: center;
     padding-top: 20px;
     border-top: 1px solid #e0e0e0;
+}
+
+.modal-edit .modal-footer {
+    padding-top: 15px;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-footer-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.edit-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    animation: slideInMessage 0.3s ease;
+    margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+    z-index: 1;
+}
+
+.edit-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.edit-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+@keyframes slideInMessage {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .btn-gift-list {
@@ -1529,6 +1744,13 @@ body {
 .admin-container {
     max-width: 1000px;
     margin: 0 auto;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 15px;
+    }
 }
 
 .admin-header {
@@ -1538,6 +1760,7 @@ body {
     margin-bottom: 40px;
     padding-bottom: 20px;
     border-bottom: 2px solid rgba(139, 111, 71, 0.2);
+    position: relative;
 }
 
 .admin-header h2 {
@@ -1634,6 +1857,12 @@ body {
     text-align: center;
     padding-top: 30px;
     border-top: 2px solid rgba(139, 111, 71, 0.2);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-export {
@@ -1648,6 +1877,9 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+    width: auto;
+    min-width: 250px;
+    flex: 0 1 auto;
 }
 
 .btn-export:hover {
@@ -1719,6 +1951,89 @@ body {
     display: flex;
     gap: 15px;
     align-items: center;
+}
+
+/* Botão Menu Hambúrguer */
+.admin-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+
+.admin-menu-toggle span {
+    width: 100%;
+    height: 3px;
+    background: #8b6f47;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.admin-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.admin-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.admin-menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(8px, -8px);
+}
+
+/* Menu Mobile */
+.admin-mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    gap: 10px;
+    animation: slideDown 0.3s ease;
+}
+
+.admin-mobile-menu.active {
+    display: flex;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-mobile-menu-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #8b6f47;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    border: 2px solid #8b6f47;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+}
+
+.admin-mobile-menu-item:hover {
+    background: #8b6f47;
+    color: #fff;
 }
 
 .admin-back-link {
@@ -2105,29 +2420,179 @@ body {
 
 /* Modal de Edição */
 .modal-edit {
-    max-width: 600px;
+    max-width: 550px;
+}
+
+.modal-edit .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-edit .modal-body {
+    margin: 15px 0 20px;
+    text-align: left;
+}
+
+.modal-edit .modal-title {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
 }
 
 .edit-form {
-    margin-top: 20px;
+    margin-top: 10px;
+}
+
+.edit-form .form-group {
+    margin-bottom: 12px;
+}
+
+.edit-form .form-group label {
+    margin-bottom: 5px;
+    font-size: 0.85rem;
+}
+
+.edit-form .form-group input[type="text"],
+.edit-form .form-group input[type="email"],
+.edit-form .form-group input[type="tel"],
+.edit-form .form-group input[type="date"] {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+}
+
+.form-row-edit {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.form-group-half {
+    flex: 1;
+    min-width: 0;
 }
 
 .radio-group-edit {
     display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-top: 10px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    margin-top: 6px;
+    justify-content: space-between;
 }
 
 .radio-option-edit {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 15px;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-size: 0.85rem;
+    flex: 1;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .modal-edit {
+        max-width: 95%;
+        width: 95%;
+    }
+    
+    .modal-edit .modal-content {
+        padding: 25px 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-edit .modal-title {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .modal-edit .modal-body {
+        margin: 10px 0 15px;
+    }
+    
+    .edit-form {
+        margin-top: 5px;
+    }
+    
+    .form-row-edit {
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 10px;
+    }
+    
+    .form-group-half {
+        margin-bottom: 12px;
+    }
+    
+    .edit-form .form-group {
+        margin-bottom: 10px;
+    }
+    
+    .edit-form .form-group label {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+    }
+    
+    .edit-form .form-group input[type="text"],
+    .edit-form .form-group input[type="email"],
+    .edit-form .form-group input[type="tel"],
+    .edit-form .form-group input[type="date"] {
+        padding: 10px 12px;
+        font-size: 1rem;
+    }
+    
+    .radio-group-edit {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .radio-option-edit {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .companion-edit-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .companion-edit-input,
+    .companion-edit-birthdate {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .btn-add-companion {
+        width: 100%;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .modal-edit .modal-footer {
+        padding-top: 15px;
+        margin-top: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .edit-form .btn-save,
+    .edit-form .btn-cancel {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 0.95rem;
+    }
+    
+    .btn-cancel {
+        margin-right: 0;
+        margin-bottom: 0;
+    }
 }
 
 .radio-option-edit:hover {
@@ -2148,8 +2613,8 @@ body {
 
 .companion-edit-item {
     display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-bottom: 8px;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -2158,10 +2623,10 @@ body {
 .companion-edit-birthdate {
     flex: 1;
     min-width: 150px;
-    padding: 10px;
+    padding: 8px 10px;
     border: 2px solid #e0e0e0;
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-family: 'Poppins', sans-serif;
     transition: border-color 0.3s ease;
 }
@@ -2197,13 +2662,13 @@ body {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: #fff;
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 0.95rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
     font-family: 'Poppins', sans-serif;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .btn-add-companion:hover {
@@ -2220,6 +2685,12 @@ body {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.edit-form .btn-save,
+.edit-form .btn-cancel {
+    padding: 10px 20px;
+    font-size: 0.9rem;
 }
 
 .btn-save:hover {
@@ -2312,13 +2783,91 @@ body {
         flex-direction: column;
     }
     
+    .admin-header {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .admin-header-actions {
+        display: none;
+    }
+    
+    .admin-menu-toggle {
+        display: flex;
+    }
+    
+    .admin-mobile-menu {
+        display: none;
+        margin-top: 10px;
+        margin-bottom: 25px;
+    }
+    
+    .admin-mobile-menu.active {
+        display: flex;
+    }
+    
     .admin-actions {
         flex-direction: column;
+        gap: 12px;
+        padding-top: 20px;
+    }
+    
+    .btn-export {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 1rem;
+        margin: 0;
     }
     
     .btn-clear {
+        width: 100%;
         margin-left: 0;
-        margin-top: 15px;
+        margin-top: 0;
+        padding: 14px 20px;
+        font-size: 1rem;
+    }
+    
+    .admin-stats {
+        gap: 12px;
+        margin-bottom: 20px;
+        margin-top: 0;
+    }
+    
+    .stat-card {
+        padding: 15px;
+        justify-content: space-between;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+    
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
+        flex: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .admin-config-section {
+        padding: 20px 15px;
+    }
+    
+    .admin-search-section {
+        padding: 20px 15px;
     }
 }
 
@@ -2329,6 +2878,14 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    .admin-link {
+        display: none;
+    }
+    
     .couple-names-romantic {
         font-size: 2.2rem;
     }
@@ -2343,12 +2900,20 @@ body {
 
     .info-icons-section {
         gap: 20px;
+        justify-content: space-around;
+        padding: 30px 15px;
+    }
+    
+    .info-icon-item {
+        flex: 0 0 auto;
+        min-width: 80px;
     }
 
     .icon-circle {
         width: 70px;
         height: 70px;
         font-size: 1.8rem;
+        margin: 0 auto 12px;
     }
 
     .detail-card,
@@ -2389,18 +2954,28 @@ body {
     }
 
     .info-icons-section {
-        gap: 15px;
-        padding: 30px 15px;
+        gap: 12px;
+        padding: 25px 10px;
+        justify-content: space-around;
+    }
+    
+    .info-icon-item {
+        flex: 0 0 auto;
+        min-width: 70px;
+        max-width: 90px;
     }
 
     .icon-circle {
         width: 60px;
         height: 60px;
         font-size: 1.5rem;
+        margin: 0 auto 10px;
     }
 
     .icon-label {
         font-size: 0.85rem;
+        line-height: 1.2;
+        word-break: break-word;
     }
 
     .radio-group {

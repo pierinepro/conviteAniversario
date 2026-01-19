@@ -39,8 +39,17 @@
     </script>
 </head>
 <body>
-    <!-- Link Admin (discreto) -->
-    <a href="admin.html" class="admin-link" style="position: fixed; top: 20px; right: 20px; z-index: 10000; color: #8b6f47; text-decoration: none; font-size: 0.85rem; opacity: 0.6; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">admin</a>
+    <!-- Menu Hambúrguer -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <!-- Menu Mobile -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="admin.html" class="mobile-menu-item">🔐 Área Administrativa</a>
+    </div>
     
     <!-- Porta de Entrada -->
     <div id="doorIntro" class="door-intro">
@@ -147,9 +156,9 @@
                         <input type="tel" id="guestPhone" name="guestPhone" placeholder="(00) 00000-0000">
                     </div>
 
-                    <div class="form-group">
-                        <label for="guestBirthDate">Data de Nascimento</label>
-                        <input type="date" id="guestBirthDate" name="guestBirthDate">
+                    <div class="form-group" id="birthDateFieldGroup">
+                        <label for="guestBirthDate">Data de Nascimento *</label>
+                        <input type="date" id="guestBirthDate" name="guestBirthDate" required>
                     </div>
 
                     <div class="form-group">
@@ -240,6 +249,11 @@
                 <button class="modal-close" id="closeGiftListModal">×</button>
                 <div class="modal-body">
                     <h2 class="gift-list-title">💕 Lista de Presentes</h2>
+                    
+                    <div class="havan-link-section" style="width: 100%; text-align: center; margin-bottom: 30px; padding: 20px; background: #f9f7f4; border-radius: 8px; border: 2px solid #d4a574;">
+                        <p class="havan-link-text" style="font-family: 'Playfair Display', serif; font-size: 1rem; color: #8b6f47; margin-bottom: 12px;">🎁 Acesse nossa lista completa na Havan:</p>
+                        <a href="https://lista.havan.com.br/Convidado/ItensListaPresente/901228" target="_blank" class="havan-link" style="font-family: 'Poppins', sans-serif; font-size: 0.95rem; color: #ffffff; background: #d4a574; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; transition: background 0.3s ease; font-weight: 600;">Ver Lista na Havan</a>
+                    </div>
                     
                     <div class="gift-category">
                         <h3 class="gift-category-title">🍽️ Louças e Itens para Mesa</h3>
@@ -374,6 +388,7 @@
                 <p class="verse-text">"Acima de tudo, porém, revistam-se do amor, que é o elo perfeito."</p>
                 <p class="verse-reference">- Colossenses 3: 14</p>
             </div>
+            <a href="admin.html" class="admin-link-footer">admin</a>
         </footer>
     </div>
 

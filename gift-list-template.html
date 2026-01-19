@@ -222,9 +222,47 @@
             line-height: 1.6;
         }
 
+        .havan-link-section {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f7f4;
+            border-radius: 8px;
+            border: 2px solid #d4a574;
+        }
+
+        .havan-link-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: #8b6f47;
+            margin-bottom: 12px;
+        }
+
+        .havan-link {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            color: #ffffff;
+            background: #d4a574;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s ease;
+            font-weight: 600;
+        }
+
+        .havan-link:hover {
+            background: #c9a961;
+        }
+
         @media print {
             body { padding: 0; background: #fff; }
             .pdf-container { box-shadow: none; border: none; }
+            .havan-link {
+                color: #ffffff !important;
+                background: #d4a574 !important;
+            }
         }
     </style>
 </head>
@@ -234,6 +272,11 @@
             <div class="title-section">
                 <h1 class="main-title">💕 Lista de Presentes</h1>
                 <p class="subtitle">Erli & Francisco</p>
+            </div>
+
+            <div class="havan-link-section">
+                <p class="havan-link-text">🎁 Acesse nossa lista completa na Havan:</p>
+                <a href="https://lista.havan.com.br/Convidado/ItensListaPresente/901228" target="_blank" class="havan-link">Ver Lista na Havan</a>
             </div>
 
             <div class="gift-category">

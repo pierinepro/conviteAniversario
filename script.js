@@ -333,18 +333,24 @@ function initializeFormElements() {
                     const config = configDoc.data();
                     const emailEnabled = config.enableEmail !== false; // Padrão: true
                     const phoneEnabled = config.enablePhone !== false; // Padrão: true
+                    const birthDateEnabled = config.enableBirthDate !== false; // Padrão: true
                     
                     // Aplicar configurações
                     const emailFieldGroup = document.getElementById('emailFieldGroup');
                     const phoneFieldGroup = document.getElementById('phoneFieldGroup');
+                    const birthDateFieldGroup = document.getElementById('birthDateFieldGroup');
                     const emailInput = document.getElementById('guestEmail');
                     const phoneInput = document.getElementById('guestPhone');
+                    const birthDateInput = document.getElementById('guestBirthDate');
                     
                     if (emailFieldGroup) {
                         emailFieldGroup.style.display = emailEnabled ? 'block' : 'none';
                     }
                     if (phoneFieldGroup) {
                         phoneFieldGroup.style.display = phoneEnabled ? 'block' : 'none';
+                    }
+                    if (birthDateFieldGroup) {
+                        birthDateFieldGroup.style.display = birthDateEnabled ? 'block' : 'none';
                     }
                     
                     // Tornar obrigatório ou não baseado na configuração
@@ -354,8 +360,11 @@ function initializeFormElements() {
                     if (phoneInput) {
                         phoneInput.required = false; // Telefone sempre opcional
                     }
+                    if (birthDateInput) {
+                        birthDateInput.required = birthDateEnabled;
+                    }
                     
-                    console.log('Configurações de campos carregadas:', { emailEnabled, phoneEnabled });
+                    console.log('Configurações de campos carregadas:', { emailEnabled, phoneEnabled, birthDateEnabled });
                     return config;
                 }
             } catch (error) {
@@ -366,21 +375,28 @@ function initializeFormElements() {
         // Fallback para localStorage
         const storedEmail = localStorage.getItem('enableEmailField');
         const storedPhone = localStorage.getItem('enablePhoneField');
+        const storedBirthDate = localStorage.getItem('enableBirthDateField');
         
         const emailEnabled = storedEmail !== 'false'; // Padrão: true
         const phoneEnabled = storedPhone !== 'false'; // Padrão: true
+        const birthDateEnabled = storedBirthDate !== 'false'; // Padrão: true
         
         // Aplicar configurações
         const emailFieldGroup = document.getElementById('emailFieldGroup');
         const phoneFieldGroup = document.getElementById('phoneFieldGroup');
+        const birthDateFieldGroup = document.querySelector('.form-group:has(#guestBirthDate)');
         const emailInput = document.getElementById('guestEmail');
         const phoneInput = document.getElementById('guestPhone');
+        const birthDateInput = document.getElementById('guestBirthDate');
         
         if (emailFieldGroup) {
             emailFieldGroup.style.display = emailEnabled ? 'block' : 'none';
         }
         if (phoneFieldGroup) {
             phoneFieldGroup.style.display = phoneEnabled ? 'block' : 'none';
+        }
+        if (birthDateFieldGroup) {
+            birthDateFieldGroup.style.display = birthDateEnabled ? 'block' : 'none';
         }
         
         if (emailInput) {
@@ -389,8 +405,11 @@ function initializeFormElements() {
         if (phoneInput) {
             phoneInput.required = false;
         }
+        if (birthDateInput) {
+            birthDateInput.required = birthDateEnabled;
+        }
         
-        return { enableEmail: emailEnabled, enablePhone: phoneEnabled };
+        return { enableEmail: emailEnabled, enablePhone: phoneEnabled, enableBirthDate: birthDateEnabled };
     }
     
     // Carregar configurações de campos ao inicializar
@@ -415,8 +434,14 @@ function initializeFormElements() {
             const today = new Date().toISOString().split('T')[0];
             companionItem.innerHTML = `
                 <div class="companion-input-group">
-                    <input type="text" class="companion-input" placeholder="Nome do acompanhante" required>
-                    <input type="date" class="companion-birthdate" placeholder="Data de nascimento" max="${today}">
+                    <div class="companion-field-wrapper">
+                        <label for="companion-name-${Date.now()}" class="companion-label">Nome completo do acompanhante *</label>
+                        <input type="text" id="companion-name-${Date.now()}" class="companion-input" placeholder="Nome completo do acompanhante" required>
+                    </div>
+                    <div class="companion-field-wrapper">
+                        <label for="companion-birthdate-${Date.now()}" class="companion-label">Data de Nascimento *</label>
+                        <input type="date" id="companion-birthdate-${Date.now()}" class="companion-birthdate" max="${today}" required>
+                    </div>
                 </div>
                 <button type="button" class="btn-remove-companion" onclick="removeCompanion(this)">×</button>
             `;
@@ -684,19 +709,31 @@ function setupFormSubmit() {
         // Coletar acompanhantes se houver (agora com nome e data de nascimento)
         const companionItems = document.querySelectorAll('.companion-item');
         companions = [];
-        companionItems.forEach(item => {
+        
+        // Validar acompanhantes antes de coletar
+        for (let item of companionItems) {
             const nameInput = item.querySelector('.companion-input');
             const birthDateInput = item.querySelector('.companion-birthdate');
             const name = nameInput ? nameInput.value.trim() : '';
             const birthDate = birthDateInput ? birthDateInput.value : null;
             
+            // Se tem nome, deve ter data de nascimento obrigatória
+            if (name && !birthDate) {
+                alert('Por favor, preencha a data de nascimento do acompanhante: ' + name);
+                if (birthDateInput) {
+                    birthDateInput.focus();
+                }
+                return;
+            }
+            
+            // Se tem nome, adicionar aos acompanhantes
             if (name) {
                 companions.push({
                     name: name,
                     birthDate: birthDate || null
                 });
             }
-        });
+        }
         
         // Criar objeto do convidado
         const guest = {
@@ -918,6 +955,15 @@ function openDoor() {
             mainContent.style.opacity = '1';
         }, 50);
         
+        // Mostrar menu hambúrguer após porta abrir
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        
+        if (mobileMenuToggle) {
+            setTimeout(() => {
+                mobileMenuToggle.classList.add('visible');
+            }, 800);
+        }
+        
         // Scroll suave para o topo
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
@@ -997,6 +1043,35 @@ if (giftListModal) {
 if (rsvpIcon) {
     rsvpIcon.addEventListener('click', function() {
         toggleCard(rsvpCard, [locationCard, dressCard]);
+    });
+}
+
+// Menu Hambúrguer Mobile
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+
+if (mobileMenuToggle && mobileMenu) {
+    mobileMenuToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        mobileMenuToggle.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
+    });
+    
+    // Fechar menu ao clicar fora
+    document.addEventListener('click', function(event) {
+        if (!mobileMenuToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+            mobileMenuToggle.classList.remove('active');
+            mobileMenu.classList.remove('active');
+        }
+    });
+    
+    // Fechar menu ao clicar em um item
+    const menuItems = mobileMenu.querySelectorAll('.mobile-menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            mobileMenuToggle.classList.remove('active');
+            mobileMenu.classList.remove('active');
+        });
     });
 }
 
