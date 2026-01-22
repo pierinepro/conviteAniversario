@@ -151,6 +151,71 @@ const rsvpCard = document.getElementById('rsvpCard');
 // Companions array para o formulário atual
 let companions = [];
 
+// Função para mostrar mensagem de erro abaixo de um campo
+function showFieldError(fieldElement, message) {
+    if (!fieldElement) {
+        console.error('showFieldError: fieldElement não fornecido');
+        return null;
+    }
+    
+    // Remover mensagem de erro anterior se existir
+    let parentElement = fieldElement.parentElement;
+    
+    // Se o elemento não tem parent, tentar encontrar o form-group mais próximo
+    if (!parentElement) {
+        parentElement = fieldElement.closest('.form-group');
+    }
+    
+    if (!parentElement) {
+        console.error('showFieldError: parentElement não encontrado');
+        return null;
+    }
+    
+    const existingError = parentElement.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Criar elemento de erro
+    const errorElement = document.createElement('div');
+    errorElement.className = 'field-error';
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    errorElement.style.opacity = '1';
+    
+    // Inserir no final do form-group
+    parentElement.appendChild(errorElement);
+    
+    // Focar no campo (se for um input e tiver método focus)
+    if (fieldElement && fieldElement.focus && typeof fieldElement.focus === 'function' && fieldElement.type !== 'hidden') {
+        try {
+            fieldElement.focus();
+        } catch (e) {
+            console.warn('Não foi possível focar no campo:', e);
+        }
+    }
+    
+    // Scroll suave até o erro
+    setTimeout(() => {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+    
+    // Remover mensagem após 5 segundos
+    setTimeout(() => {
+        if (errorElement && errorElement.parentElement) {
+            errorElement.style.opacity = '0';
+            errorElement.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                if (errorElement && errorElement.parentElement) {
+                    errorElement.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+    
+    return errorElement;
+}
+
 // Mostrar/ocultar campo de acompanhantes baseado na resposta e adicionar classe checked
 let radioGroup;
 
@@ -676,27 +741,89 @@ function setupFormSubmit() {
         }
         
         if (!guestName) {
-            alert('Por favor, preencha seu nome completo.');
+            console.log('Nome vazio, mostrando erro');
+            const error = showFieldError(guestNameEl, 'Por favor, preencha seu nome completo.');
+            console.log('Erro criado:', error);
+            return;
+        }
+        
+        // Validar se o nome tem nome e sobrenome (pelo menos 2 palavras)
+        const nameParts = guestName.trim().split(/\s+/).filter(part => part.length > 0);
+        if (nameParts.length < 2) {
+            console.log('Nome incompleto, mostrando erro');
+            const error = showFieldError(guestNameEl, 'Por favor, informe seu nome completo (nome e sobrenome).');
+            console.log('Erro criado:', error);
             return;
         }
         
         // Validar e-mail apenas se o campo estiver habilitado
         if (emailEnabled) {
+            const guestEmailEl = document.getElementById('guestEmail');
             if (!guestEmail) {
-                alert('Por favor, preencha seu e-mail.');
+                if (guestEmailEl) {
+                    showFieldError(guestEmailEl, 'Por favor, preencha seu e-mail.');
+                } else {
+                    alert('Por favor, preencha seu e-mail.');
+                }
                 return;
             }
             
             // Validação básica de e-mail
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(guestEmail)) {
-                alert('Por favor, insira um e-mail válido.');
+                if (guestEmailEl) {
+                    showFieldError(guestEmailEl, 'Por favor, insira um e-mail válido.');
+                } else {
+                    alert('Por favor, insira um e-mail válido.');
+                }
                 return;
             }
         }
         
         if (!attendanceRadio) {
-            alert('Por favor, selecione uma opção de presença.');
+            const radioGroupEl = document.getElementById('attendanceGroup') || document.querySelector('.radio-group');
+            const radioGroupParent = radioGroupEl ? radioGroupEl.closest('.form-group') : null;
+            if (radioGroupParent) {
+                // Remover mensagem de erro anterior se existir
+                const existingError = radioGroupParent.querySelector('.field-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Criar elemento de erro diretamente no form-group
+                const errorElement = document.createElement('div');
+                errorElement.className = 'field-error';
+                errorElement.textContent = 'Por favor, selecione uma opção de presença.';
+                errorElement.style.display = 'block';
+                errorElement.style.opacity = '1';
+                
+                // Inserir após o radio-group
+                if (radioGroupEl && radioGroupEl.nextSibling) {
+                    radioGroupParent.insertBefore(errorElement, radioGroupEl.nextSibling);
+                } else {
+                    radioGroupParent.appendChild(errorElement);
+                }
+                
+                // Scroll suave até o erro
+                setTimeout(() => {
+                    errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+                
+                // Remover mensagem após 5 segundos
+                setTimeout(() => {
+                    if (errorElement && errorElement.parentElement) {
+                        errorElement.style.opacity = '0';
+                        errorElement.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            if (errorElement && errorElement.parentElement) {
+                                errorElement.remove();
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            } else {
+                alert('Por favor, selecione uma opção de presença.');
+            }
             return;
         }
         
@@ -717,11 +844,21 @@ function setupFormSubmit() {
             const name = nameInput ? nameInput.value.trim() : '';
             const birthDate = birthDateInput ? birthDateInput.value : null;
             
+            // Se tem nome, validar se tem nome e sobrenome
+            if (name) {
+                const nameParts = name.split(/\s+/).filter(part => part.length > 0);
+                if (nameParts.length < 2) {
+                    if (nameInput) {
+                        showFieldError(nameInput, 'Por favor, informe o nome completo (nome e sobrenome) do acompanhante.');
+                    }
+                    return;
+                }
+            }
+            
             // Se tem nome, deve ter data de nascimento obrigatória
             if (name && !birthDate) {
-                alert('Por favor, preencha a data de nascimento do acompanhante: ' + name);
                 if (birthDateInput) {
-                    birthDateInput.focus();
+                    showFieldError(birthDateInput, 'Por favor, preencha a data de nascimento do acompanhante.');
                 }
                 return;
             }

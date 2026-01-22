@@ -88,6 +88,9 @@
                     <button class="admin-mobile-menu-item" id="adminLogoutMobile">Sair</button>
                 </div>
                 
+                <!-- Mensagem de sucesso/erro -->
+                <div id="adminNotification" class="admin-notification" style="display: none;"></div>
+                
                 <div class="admin-stats">
                     <div class="stat-card stat-confirmed">
                         <div class="stat-icon">✅</div>
@@ -159,7 +162,10 @@
                 <div class="admin-search-section">
                     <h3>Buscar Convidado</h3>
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Buscar por nome, e-mail ou telefone...">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="searchInput" placeholder="Buscar por nome, e-mail ou telefone...">
+                            <button class="btn-clear-search" id="clearSearchBtn" style="display: none;" title="Limpar busca">×</button>
+                        </div>
                         <button class="btn-search" id="searchBtn">🔍 Buscar</button>
                     </div>
                     <div id="searchResults" class="search-results"></div>
@@ -175,6 +181,15 @@
             <div class="modal-body">
                 <h3 class="modal-title">Confirmar Exclusão</h3>
                 <p class="modal-message" id="deleteConfirmMessage">Tem certeza que deseja excluir este convidado?</p>
+                <form id="deletePasswordForm" class="clear-password-form">
+                    <div class="form-group">
+                        <label for="deletePassword">Senha *</label>
+                        <input type="password" id="deletePassword" name="deletePassword" required placeholder="Digite sua senha para confirmar">
+                    </div>
+                    <div id="deletePasswordError" class="admin-error" style="display: none; margin-top: 10px;">
+                        <p>Senha incorreta!</p>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel" id="cancelDeleteBtn">Cancelar</button>

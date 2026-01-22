@@ -24,6 +24,10 @@ function isFirebaseConfigured() {
 
 // Função para salvar no Firestore (com fallback para localStorage)
 async function saveGuestToFirestore(guest) {
+    console.log('saveGuestToFirestore chamado com:', guest);
+    console.log('guest.id:', guest.id);
+    console.log('guest.firestoreId:', guest.firestoreId);
+    
     if (isFirebaseConfigured()) {
         try {
             const { collection, addDoc, setDoc, doc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
@@ -33,13 +37,31 @@ async function saveGuestToFirestore(guest) {
             // Se o convidado tem um ID do Firestore (id ou firestoreId), atualizar diretamente
             const firestoreId = guest.id || guest.firestoreId;
             
-            // Validar se o ID é uma string válida
-            if (firestoreId && typeof firestoreId === 'string' && firestoreId.length > 0) {
+            console.log('firestoreId extraído:', firestoreId);
+            console.log('Tipo do firestoreId:', typeof firestoreId);
+            
+            // Validar se o ID é válido (pode ser string ou número)
+            // Converter para string se for número para usar no Firestore
+            const firestoreIdString = firestoreId ? String(firestoreId) : null;
+            const isValidId = firestoreIdString && firestoreIdString.length > 0;
+            
+            console.log('firestoreIdString:', firestoreIdString);
+            console.log('isValidId:', isValidId);
+            
+            if (isValidId) {
                 // Remover o id do objeto antes de salvar (não deve ser salvo como campo)
                 const { id, firestoreId: _, ...guestData } = guest;
-                await setDoc(doc(guestsRef, firestoreId), guestData, { merge: true });
-                console.log('Convidado atualizado pelo ID:', firestoreId);
+                console.log('Atualizando documento com ID:', firestoreIdString);
+                console.log('Dados a serem salvos:', guestData);
+                
+                await setDoc(doc(guestsRef, firestoreIdString), guestData, { merge: true });
+                
+                // Garantir que o ID seja preservado no objeto guest para uso posterior
+                guest.id = firestoreId; // Manter o tipo original (número ou string)
+                console.log('✅ Convidado ATUALIZADO pelo ID:', firestoreIdString);
+                console.log('Dados salvos (sem ID):', guestData);
             } else {
+                console.warn('⚠️ ID inválido ou ausente. firestoreId:', firestoreId);
                 // Se não tem ID válido, verificar se o convidado já existe (por nome)
                 if (guest.name && guest.name.trim()) {
                     const q = query(guestsRef, where('name', '==', guest.name.trim()));
@@ -416,11 +438,15 @@ if (adminLoginForm) {
                     let errorMessage = 'Login ou senha incorretos!';
                     
                     if (error.code === 'auth/user-not-found') {
-                        errorMessage = 'Usuário não encontrado!';
+                        errorMessage = 'Usuário não encontrado! Verifique se o e-mail está correto e se o usuário foi criado no Firebase Authentication.';
                     } else if (error.code === 'auth/wrong-password') {
-                        errorMessage = 'Senha incorreta!';
+                        errorMessage = 'Senha incorreta! Verifique se a senha está correta.';
                     } else if (error.code === 'auth/invalid-email') {
-                        errorMessage = 'E-mail inválido!';
+                        errorMessage = 'E-mail inválido! Digite um e-mail válido.';
+                    } else if (error.code === 'auth/invalid-credential') {
+                        errorMessage = 'E-mail ou senha incorretos! Verifique se o usuário foi criado no Firebase Authentication com este e-mail e senha.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMessage = 'Muitas tentativas falharam. Aguarde alguns minutos antes de tentar novamente.';
                     }
                     
                     adminError.querySelector('p').textContent = errorMessage;
@@ -537,6 +563,11 @@ async function loadAdminData() {
         
         // Executar busca inicial (mostra todos os convidados paginados)
         performSearch();
+        
+        // Atualizar visibilidade do botão de limpar busca
+        if (searchInput) {
+            updateClearButtonVisibility();
+        }
     } catch (error) {
         console.error('Erro ao carregar dados do admin:', error);
     }
@@ -824,6 +855,10 @@ if (closeClearModal) {
     });
 }
 
+// Variável para debounce da busca
+let searchTimeout = null;
+const searchDelay = 400; // Delay de 400ms para evitar múltiplas consultas
+
 // Buscar convidados
 if (searchBtn) {
     searchBtn.addEventListener('click', function() {
@@ -831,20 +866,133 @@ if (searchBtn) {
     });
 }
 
-if (searchInput) {
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            performSearch();
+// Botão de limpar busca
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', function() {
+        if (searchInput) {
+            searchInput.value = '';
+            updateClearButtonVisibility();
+            performSearch(); // Mostrar todos os resultados
         }
     });
 }
 
+// Função para atualizar visibilidade do botão de limpar
+function updateClearButtonVisibility() {
+    if (clearSearchBtn && searchInput) {
+        if (searchInput.value.trim().length > 0) {
+            clearSearchBtn.style.display = 'block';
+        } else {
+            clearSearchBtn.style.display = 'none';
+        }
+    }
+}
+
+// Busca em tempo real com debounce
+if (searchInput) {
+    // Buscar enquanto digita (com debounce)
+    searchInput.addEventListener('input', function() {
+        updateClearButtonVisibility();
+        
+        // Limpar timeout anterior
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Criar novo timeout
+        searchTimeout = setTimeout(() => {
+            performSearch();
+        }, searchDelay);
+    });
+    
+    // Buscar ao pressionar Enter (sem delay)
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            // Limpar timeout se houver
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            performSearch();
+        }
+    });
+    
+    // Atualizar visibilidade do botão ao carregar
+    updateClearButtonVisibility();
+}
+
+// Variável para ordenação
+let sortOrder = 'name'; // 'name' ou 'none'
+
+// Variável para controlar se deve resetar página
+let shouldResetPage = true;
+
+// Função para calcular relevância de um resultado na busca
+function calculateRelevance(item, searchTerm) {
+    let score = 0;
+    const searchLower = searchTerm.toLowerCase();
+    const itemName = (item.name || '').toLowerCase();
+    
+    // Pontuação para correspondência no nome
+    if (itemName) {
+        // Correspondência exata (máxima pontuação)
+        if (itemName === searchLower) {
+            score += 1000;
+        }
+        // Começa com o termo de busca (alta pontuação)
+        else if (itemName.startsWith(searchLower)) {
+            score += 500;
+        }
+        // Contém o termo de busca (pontuação base)
+        else if (itemName.includes(searchLower)) {
+            score += 100;
+            // Bônus se estiver no início de uma palavra
+            const words = itemName.split(/\s+/);
+            words.forEach(word => {
+                if (word.startsWith(searchLower)) {
+                    score += 50;
+                }
+            });
+        }
+    }
+    
+    // Pontuação para correspondência no e-mail
+    if (item.email) {
+        const emailLower = item.email.toLowerCase();
+        if (emailLower === searchLower) {
+            score += 300;
+        } else if (emailLower.startsWith(searchLower)) {
+            score += 150;
+        } else if (emailLower.includes(searchLower)) {
+            score += 50;
+        }
+    }
+    
+    // Pontuação para correspondência no telefone
+    if (item.phone) {
+        const phoneClean = item.phone.replace(/\D/g, '');
+        const searchClean = searchTerm.replace(/\D/g, '');
+        if (phoneClean.includes(searchClean)) {
+            score += 30;
+        }
+    }
+    
+    // Penalidade para acompanhantes (convidados principais têm prioridade)
+    if (item.isCompanion) {
+        score -= 10;
+    }
+    
+    return score;
+}
+
 // Função de busca
-function performSearch() {
+function performSearch(resetPage = true) {
     const searchTerm = searchInput.value.trim().toLowerCase();
     
-    // Resetar para primeira página ao fazer nova busca
-    currentPage = 1;
+    // Resetar para primeira página apenas se solicitado (não ao mudar de página)
+    if (resetPage) {
+        currentPage = 1;
+    }
     
     let results;
     
@@ -852,37 +1000,44 @@ function performSearch() {
         // Se estiver vazio, mostrar todos os convidados
         results = [...guestsList];
     } else {
-        // Filtrar por termo de busca
+        // Filtrar por termo de busca (incluindo acompanhantes)
         results = guestsList.filter(guest => {
             const nameMatch = guest.name && guest.name.toLowerCase().includes(searchTerm);
             const emailMatch = guest.email && guest.email.toLowerCase().includes(searchTerm);
             const phoneMatch = guest.phone && guest.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''));
             
-            return nameMatch || emailMatch || phoneMatch;
+            // Verificar se algum acompanhante corresponde ao termo de busca
+            let companionMatch = false;
+            if (guest.companions && Array.isArray(guest.companions) && guest.companions.length > 0) {
+                companionMatch = guest.companions.some(companion => {
+                    const companionName = typeof companion === 'object' ? (companion.name || '') : (companion || '');
+                    return companionName.toLowerCase().includes(searchTerm);
+                });
+            }
+            
+            return nameMatch || emailMatch || phoneMatch || companionMatch;
         });
     }
     
-    displaySearchResults(results);
+    displaySearchResults(results, searchTerm);
 }
 
 // Exibir resultados da busca com paginação
-function displaySearchResults(results) {
-    if (!searchResults) return;
+function displaySearchResults(results, searchTerm = '') {
+    if (!searchResults) {
+        console.error('Elemento searchResults não encontrado');
+        return;
+    }
     
+    // Sempre exibir a lista, mesmo se estiver vazia (mas com mensagem)
     if (results.length === 0) {
         searchResults.innerHTML = '<p class="search-message">Nenhum convidado encontrado.</p>';
         return;
     }
     
-    // Calcular paginação
-    const totalPages = Math.ceil(results.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedResults = results.slice(startIndex, endIndex);
-    
-    // Expandir resultados para incluir acompanhantes
+    // PRIMEIRO: Expandir TODOS os resultados para incluir acompanhantes
     const expandedResults = [];
-    paginatedResults.forEach(guest => {
+    results.forEach(guest => {
         // Adicionar o convidado principal
         expandedResults.push({ ...guest, isCompanion: false, companionIndex: null });
         
@@ -904,11 +1059,65 @@ function displaySearchResults(results) {
         }
     });
     
+    // Ordenar por relevância se houver termo de busca, senão por nome se solicitado
+    if (searchTerm && searchTerm.trim().length > 0) {
+        // Calcular relevância para cada item
+        expandedResults.forEach(item => {
+            item._relevanceScore = calculateRelevance(item, searchTerm);
+        });
+        
+        // Ordenar por relevância (maior pontuação primeiro)
+        expandedResults.sort((a, b) => {
+            // Primeiro por relevância (maior primeiro)
+            if (b._relevanceScore !== a._relevanceScore) {
+                return b._relevanceScore - a._relevanceScore;
+            }
+            // Se a relevância for igual, ordenar por nome
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            return nameA.localeCompare(nameB, 'pt-BR');
+        });
+        
+        // Remover a propriedade temporária de pontuação
+        expandedResults.forEach(item => {
+            delete item._relevanceScore;
+        });
+    } else if (sortOrder === 'name') {
+        // Ordenar por nome se não houver busca
+        expandedResults.sort((a, b) => {
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            return nameA.localeCompare(nameB, 'pt-BR');
+        });
+    }
+    
+    // DEPOIS: Calcular paginação dos resultados expandidos
+    const totalExpanded = expandedResults.length;
+    const totalPages = Math.ceil(totalExpanded / itemsPerPage);
+    
+    // Garantir que currentPage não seja maior que totalPages
+    if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+    }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedResults = expandedResults.slice(startIndex, endIndex);
+    
     let html = '<div class="results-list">';
     
-    // Mostrar informações de paginação
+    // Adicionar controles de ordenação
+    html += `<div class="sort-controls">
+        <label for="sortSelect">Ordenar por:</label>
+        <select id="sortSelect" class="sort-select" onchange="changeSortOrder(this.value)">
+            <option value="none" ${sortOrder === 'none' ? 'selected' : ''}>Sem ordenação</option>
+            <option value="name" ${sortOrder === 'name' ? 'selected' : ''}>Nome (A-Z)</option>
+        </select>
+    </div>`;
+    
+    // Mostrar informações de paginação (usando total expandido)
     html += `<div class="pagination-info">
-        <p>Mostrando ${startIndex + 1} - ${Math.min(endIndex, results.length)} de ${results.length} resultado(s)</p>
+        <p>Mostrando ${startIndex + 1} - ${Math.min(endIndex, totalExpanded)} de ${totalExpanded} pessoa(s) - Página ${currentPage} de ${totalPages}</p>
     </div>`;
     
     // Função auxiliar para calcular idade
@@ -961,7 +1170,7 @@ function displaySearchResults(results) {
         return null;
     }
     
-    expandedResults.forEach(item => {
+    paginatedResults.forEach(item => {
         const status = item.attendance === 'yes' ? 'Confirmado' :
                       item.attendance === 'maybe' ? 'Em Dúvida' : 'Não Comparecerá';
         const statusIcon = item.attendance === 'yes' ? '✅' : 
@@ -1020,12 +1229,17 @@ function displaySearchResults(results) {
     
     html += '</div>';
     
-    // Adicionar controles de paginação
+    // Sempre adicionar controles de paginação se houver mais de uma página
     if (totalPages > 1) {
         html += generatePaginationControls(totalPages, currentPage);
     }
     
     searchResults.innerHTML = html;
+    
+    // Garantir que a seção de resultados seja visível
+    if (searchResults.style.display === 'none') {
+        searchResults.style.display = 'block';
+    }
 }
 
 // Gerar controles de paginação
@@ -1083,12 +1297,20 @@ function generatePaginationControls(totalPages, currentPage) {
 
 // Função para navegar para uma página específica
 window.goToPage = function(page) {
+    console.log('Navegando para página:', page);
     currentPage = page;
-    performSearch();
+    performSearch(false); // Não resetar página, apenas atualizar
     // Scroll para o topo dos resultados
     if (searchResults) {
         searchResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+};
+
+// Função para alterar ordenação
+window.changeSortOrder = function(order) {
+    sortOrder = order;
+    currentPage = 1; // Resetar para primeira página ao mudar ordenação
+    performSearch(true); // Resetar página ao mudar ordenação
 };
 
 // Função global para editar convidado
@@ -1110,12 +1332,26 @@ window.editGuest = function(guestId) {
     
     console.log('Convidado encontrado:', guest);
     console.log('ID do convidado encontrado:', guest.id);
-    guestToEdit = guest;
+    // Criar uma cópia profunda do convidado para evitar referências
+    guestToEdit = JSON.parse(JSON.stringify(guest));
     
     // Garantir que o ID seja preservado
     if (!guestToEdit.id && guestToEdit.firestoreId) {
         guestToEdit.id = guestToEdit.firestoreId;
     }
+    
+    // Garantir que ambos id e firestoreId estejam presentes
+    if (guestToEdit.id && !guestToEdit.firestoreId) {
+        guestToEdit.firestoreId = guestToEdit.id;
+    }
+    if (guestToEdit.firestoreId && !guestToEdit.id) {
+        guestToEdit.id = guestToEdit.firestoreId;
+    }
+    
+    console.log('🔍 editGuest - guest encontrado:', guest);
+    console.log('🔍 editGuest - guestToEdit definido:', guestToEdit);
+    console.log('🔍 editGuest - guestToEdit.id:', guestToEdit.id);
+    console.log('🔍 editGuest - guestToEdit.firestoreId:', guestToEdit.firestoreId);
     
     // Preencher formulário de edição
     const nameInput = document.getElementById('editName');
@@ -1265,6 +1501,22 @@ window.deleteGuest = function(guestId) {
             messageHTML += '<br><strong>Esta ação não pode ser desfeita!</strong>';
             message.innerHTML = messageHTML;
         }
+        
+        // Limpar campo de senha e erro
+        const passwordInput = document.getElementById('deletePassword');
+        const passwordError = document.getElementById('deletePasswordError');
+        
+        if (passwordInput) {
+            passwordInput.value = '';
+            setTimeout(() => {
+                passwordInput.focus();
+            }, 300);
+        }
+        
+        if (passwordError) {
+            passwordError.style.display = 'none';
+        }
+        
         deleteConfirmModal.style.display = 'flex';
     }
 };
@@ -1296,21 +1548,140 @@ window.deleteCompanion = async function(guestId, companionIndex) {
         
         await updateAdminStats();
         performSearch(); // Atualizar resultados da busca
-        alert('Acompanhante excluído com sucesso!');
+        showAdminNotification('Acompanhante excluído com sucesso!', 'success');
     }
 };
 
 // Confirmar exclusão
 if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener('click', async function() {
-        if (guestToDelete) {
+    confirmDeleteBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        if (!guestToDelete) {
+            return;
+        }
+        
+        const passwordInput = document.getElementById('deletePassword');
+        const passwordError = document.getElementById('deletePasswordError');
+        
+        if (!passwordInput) {
+            console.error('Campo de senha não encontrado!');
+            alert('Erro: Campo de senha não encontrado!');
+            return;
+        }
+        
+        if (!passwordInput.value.trim()) {
+            if (passwordError) {
+                passwordError.style.display = 'block';
+                const errorText = passwordError.querySelector('p');
+                if (errorText) {
+                    errorText.textContent = 'Por favor, digite sua senha!';
+                }
+            }
+            passwordInput.focus();
+            return;
+        }
+        
+        const password = passwordInput.value.trim();
+        
+        // Validar senha
+        let isValidPassword = false;
+        
+        if (isFirebaseConfigured() && window.firebaseAuth) {
+            try {
+                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                
+                // Obter o e-mail do usuário atual autenticado
+                const currentUser = window.firebaseAuth.currentUser;
+                if (currentUser && currentUser.email) {
+                    console.log('Usuário autenticado encontrado:', currentUser.email);
+                    // Tentar fazer login novamente com a senha fornecida
+                    try {
+                        await signInWithEmailAndPassword(window.firebaseAuth, currentUser.email, password);
+                        isValidPassword = true;
+                        console.log('Senha válida!');
+                    } catch (error) {
+                        console.log('Senha inválida:', error.message);
+                        isValidPassword = false;
+                    }
+                } else {
+                    console.log('Nenhum usuário autenticado, não é possível validar senha');
+                    // Se não houver usuário autenticado, não podemos validar a senha
+                    // Mostrar mensagem de erro
+                    if (passwordError) {
+                        passwordError.style.display = 'block';
+                        const errorText = passwordError.querySelector('p');
+                        if (errorText) {
+                            errorText.textContent = 'Você precisa estar logado para validar a senha. Faça login primeiro.';
+                        }
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao validar senha:', error);
+                isValidPassword = false;
+            }
+        } else {
+            // Fallback: usar sistema antigo se Firebase não estiver configurado
+            const ADMIN_CREDENTIALS = window.ADMIN_CONFIG || {
+                login: 'admin',
+                password: 'admin'
+            };
+            isValidPassword = (password === ADMIN_CREDENTIALS.password);
+        }
+        
+        if (!isValidPassword) {
+            if (passwordError) {
+                passwordError.style.display = 'block';
+                const errorText = passwordError.querySelector('p');
+                if (errorText) {
+                    errorText.textContent = 'Senha incorreta!';
+                }
+            }
+            if (passwordInput) {
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+            return;
+        }
+        
+        // Senha correta, proceder com a exclusão
+        if (passwordError) {
+            passwordError.style.display = 'none';
+        }
+        
+        // Mostrar loading
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.textContent = 'Excluindo...';
+        }
+        
+        try {
             await deleteGuestFromFirestore(guestToDelete);
+            
+            // Limpar campo de senha
+            if (passwordInput) {
+                passwordInput.value = '';
+            }
+            
             guestToDelete = null;
             if (deleteConfirmModal) {
                 deleteConfirmModal.style.display = 'none';
             }
+            
+            // Mostrar mensagem de sucesso
+            showAdminNotification('Convidado excluído com sucesso!', 'success');
+            
             await updateAdminStats();
             performSearch(); // Atualizar resultados da busca
+        } catch (error) {
+            console.error('Erro ao excluir convidado:', error);
+            showAdminNotification('Erro ao excluir convidado: ' + error.message, 'error');
+        } finally {
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.textContent = 'Confirmar Exclusão';
+            }
         }
     });
 }
@@ -1318,6 +1689,16 @@ if (confirmDeleteBtn) {
 // Cancelar exclusão
 if (cancelDeleteBtn) {
     cancelDeleteBtn.addEventListener('click', function() {
+        const passwordInput = document.getElementById('deletePassword');
+        const passwordError = document.getElementById('deletePasswordError');
+        
+        if (passwordInput) {
+            passwordInput.value = '';
+        }
+        if (passwordError) {
+            passwordError.style.display = 'none';
+        }
+        
         guestToDelete = null;
         if (deleteConfirmModal) {
             deleteConfirmModal.style.display = 'none';
@@ -1327,10 +1708,29 @@ if (cancelDeleteBtn) {
 
 if (closeDeleteModal) {
     closeDeleteModal.addEventListener('click', function() {
+        const passwordInput = document.getElementById('deletePassword');
+        const passwordError = document.getElementById('deletePasswordError');
+        
+        if (passwordInput) {
+            passwordInput.value = '';
+        }
+        if (passwordError) {
+            passwordError.style.display = 'none';
+        }
+        
         guestToDelete = null;
         if (deleteConfirmModal) {
             deleteConfirmModal.style.display = 'none';
         }
+    });
+}
+
+// Prevenir submit do formulário de senha de exclusão
+const deletePasswordForm = document.getElementById('deletePasswordForm');
+if (deletePasswordForm) {
+    deletePasswordForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // O botão confirmDeleteBtn já tem o event listener
     });
 }
 
@@ -1414,23 +1814,53 @@ async function handleEditSubmit(e) {
     console.log('Criando updatedGuest...');
     console.log('guestToEdit.id:', guestToEdit.id);
     
+    // Validar nome completo (nome e sobrenome) se o campo estiver preenchido
+    const nameValue = nameInput.value.trim();
+    if (nameValue) {
+        const nameParts = nameValue.split(/\s+/).filter(part => part.length > 0);
+        if (nameParts.length < 2) {
+            showEditMessage('Por favor, informe o nome completo (nome e sobrenome).', 'error');
+            nameInput.focus();
+            return;
+        }
+    }
+    
     // Preservar o ID do Firestore mesmo se o nome for alterado
     // IMPORTANTE: O ID deve ser preservado ANTES de qualquer outra propriedade
     const originalId = guestToEdit.id || guestToEdit.firestoreId || null;
-    console.log('ID original preservado:', originalId);
+    console.log('🔍 ID original preservado:', originalId);
+    console.log('🔍 guestToEdit.id:', guestToEdit.id);
+    console.log('🔍 guestToEdit.firestoreId:', guestToEdit.firestoreId);
+    console.log('🔍 guestToEdit completo:', guestToEdit);
     
+    if (!originalId) {
+        console.error('❌ ERRO CRÍTICO: Não foi possível encontrar o ID do convidado para edição!');
+        showEditMessage('Erro: Não foi possível identificar o convidado para edição. Recarregue a página e tente novamente.', 'error');
+        return;
+    }
+    console.log('guestToEdit completo antes de criar updatedGuest:', guestToEdit);
+    
+    // Criar updatedGuest garantindo que o ID seja preservado
+    // NÃO usar spread operator primeiro, pois pode sobrescrever o ID
     const updatedGuest = {
-        ...guestToEdit,
-        id: originalId, // GARANTIR que o ID seja preservado explicitamente ANTES de tudo
-        name: nameInput.value.trim() || null,
+        id: originalId, // DEFINIR O ID PRIMEIRO
+        firestoreId: originalId, // Também como firestoreId para compatibilidade
+        name: nameValue || null,
         email: emailInput.value.trim() || null,
         phone: phoneInput.value.trim() || null,
         birthDate: birthDateInput ? (birthDateInput.value || null) : null,
-        attendance: attendanceRadio ? attendanceRadio.value : null
+        attendance: attendanceRadio ? attendanceRadio.value : null,
+        // Copiar outras propriedades do guestToEdit (exceto id, firestoreId e campos já definidos)
+        ...Object.fromEntries(
+            Object.entries(guestToEdit).filter(([key]) => 
+                !['id', 'firestoreId', 'name', 'email', 'phone', 'birthDate', 'attendance'].includes(key)
+            )
+        )
     };
     
-    console.log('updatedGuest criado com ID:', updatedGuest.id);
-    console.log('updatedGuest completo:', updatedGuest);
+    console.log('✅ updatedGuest criado com ID:', updatedGuest.id);
+    console.log('✅ updatedGuest.firestoreId:', updatedGuest.firestoreId);
+    console.log('✅ updatedGuest completo:', updatedGuest);
     
     // Coletar acompanhantes
     if (editCompanionsList) {
@@ -1438,6 +1868,22 @@ async function handleEditSubmit(e) {
         const companionBirthDates = editCompanionsList.querySelectorAll('.companion-edit-birthdate');
         updatedGuest.companions = [];
         
+        // Validar todos os acompanhantes primeiro
+        for (let index = 0; index < companionInputs.length; index++) {
+            const nameInput = companionInputs[index];
+            const name = nameInput.value.trim();
+            if (name) {
+                // Validar se o nome tem nome e sobrenome
+                const nameParts = name.split(/\s+/).filter(part => part.length > 0);
+                if (nameParts.length < 2) {
+                    showEditMessage('Por favor, informe o nome completo (nome e sobrenome) do acompanhante.', 'error');
+                    nameInput.focus();
+                    return;
+                }
+            }
+        }
+        
+        // Se passou na validação, coletar os dados
         companionInputs.forEach((nameInput, index) => {
             const name = nameInput.value.trim();
             if (name) {
@@ -1457,23 +1903,43 @@ async function handleEditSubmit(e) {
     
     // Salvar no Firestore
     try {
-        await saveGuestToFirestore(updatedGuest);
-        console.log('Convidado salvo no Firestore');
+        console.log('📤 Chamando saveGuestToFirestore com:', updatedGuest);
+        console.log('📤 updatedGuest.id:', updatedGuest.id);
+        console.log('📤 updatedGuest.firestoreId:', updatedGuest.firestoreId);
         
-        // Atualizar lista local
+        await saveGuestToFirestore(updatedGuest);
+        
+        console.log('✅ saveGuestToFirestore concluído com sucesso');
+        console.log('✅ updatedGuest.id após salvar:', updatedGuest.id);
+        
+        // Atualizar lista local usando APENAS o ID (não o nome, pois pode ter mudado)
         const index = guestsList.findIndex(g => {
+            // Usar APENAS o ID para encontrar o convidado
+            if (g.id && originalId && g.id === originalId) return true;
             if (g.id && guestToEdit.id && g.id === guestToEdit.id) return true;
-            if (g.name && guestToEdit.name && g.name === guestToEdit.name) return true;
             return false;
         });
         
         if (index !== -1) {
-            guestsList[index] = updatedGuest;
-            console.log('Lista local atualizada');
+            // Atualizar o item existente mantendo o ID
+            guestsList[index] = { ...updatedGuest, id: originalId };
+            console.log('Lista local atualizada pelo ID:', originalId);
         } else {
-            // Se não encontrou, adicionar
-            guestsList.push(updatedGuest);
-            console.log('Convidado adicionado à lista local');
+            // Se não encontrou pelo ID, tentar pelo nome antigo (fallback)
+            const indexByName = guestsList.findIndex(g => {
+                return g.name && guestToEdit.name && g.name === guestToEdit.name;
+            });
+            
+            if (indexByName !== -1) {
+                // Atualizar usando o ID encontrado
+                const existingId = guestsList[indexByName].id;
+                guestsList[indexByName] = { ...updatedGuest, id: existingId || originalId };
+                console.log('Lista local atualizada pelo nome (fallback):', existingId || originalId);
+            } else {
+                // Se não encontrou de forma alguma, adicionar com o ID original
+                guestsList.push({ ...updatedGuest, id: originalId });
+                console.log('Convidado adicionado à lista local com ID:', originalId);
+            }
         }
         
         // Mostrar mensagem de sucesso ANTES de fechar o modal
@@ -1482,19 +1948,13 @@ async function handleEditSubmit(e) {
         await updateAdminStats();
         performSearch(); // Atualizar resultados da busca
         
-        // NÃO fechar o modal imediatamente para mostrar a mensagem
-        // Fechar modal apenas antes de recarregar
+        // Fechar modal após mostrar a mensagem de sucesso
         setTimeout(() => {
             guestToEdit = null;
             if (editModal) {
                 editModal.style.display = 'none';
             }
-        }, 3500);
-        
-        // Recarregar a página após salvar (apenas em caso de sucesso)
-        setTimeout(() => {
-            window.location.reload();
-        }, 2000);
+        }, 3000); // 3 segundos para visualizar a mensagem de sucesso
     } catch (error) {
         console.error('Erro ao salvar no Firestore:', error);
         // Mostrar mensagem de erro detalhada
@@ -1529,6 +1989,41 @@ function showEditMessage(message, type = 'success') {
         }, 5000);
     } else {
         console.error('Elemento editMessage não encontrado!');
+    }
+}
+
+// Função para exibir notificações na área admin
+function showAdminNotification(message, type = 'success') {
+    const notificationElement = document.getElementById('adminNotification');
+    
+    if (notificationElement) {
+        notificationElement.textContent = message;
+        notificationElement.className = 'admin-notification ' + type;
+        notificationElement.style.display = 'block';
+        notificationElement.style.visibility = 'visible';
+        notificationElement.style.opacity = '1';
+        
+        // Scroll suave até a notificação
+        setTimeout(() => {
+            notificationElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+        
+        // Remover mensagem após 4 segundos
+        setTimeout(() => {
+            if (notificationElement) {
+                notificationElement.style.opacity = '0';
+                notificationElement.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    if (notificationElement) {
+                        notificationElement.style.display = 'none';
+                        notificationElement.style.visibility = 'hidden';
+                        notificationElement.className = 'admin-notification';
+                    }
+                }, 300);
+            }
+        }, 4000);
+    } else {
+        console.error('Elemento adminNotification não encontrado!');
     }
 }
 
@@ -1706,6 +2201,7 @@ async function loadFieldsConfig() {
                 // Se não existir a propriedade, usar padrão true
                 const emailValue = config.enableEmail !== undefined ? config.enableEmail !== false : true;
                 const phoneValue = config.enablePhone !== undefined ? config.enablePhone !== false : true;
+                const birthDateValue = config.enableBirthDate !== undefined ? config.enableBirthDate !== false : true;
                 
                 if (enableEmailField) {
                     enableEmailField.checked = emailValue;
@@ -1713,8 +2209,11 @@ async function loadFieldsConfig() {
                 if (enablePhoneField) {
                     enablePhoneField.checked = phoneValue;
                 }
+                if (enableBirthDateField) {
+                    enableBirthDateField.checked = birthDateValue;
+                }
                 console.log('Configurações de campos carregadas:', config);
-                return { enableEmail: emailValue, enablePhone: phoneValue };
+                return { enableEmail: emailValue, enablePhone: phoneValue, enableBirthDate: birthDateValue };
             }
         } catch (error) {
             console.error('Erro ao carregar configurações de campos:', error);

@@ -148,6 +148,33 @@ body {
     }
 }
 
+.footer-copyright {
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid rgba(139, 111, 71, 0.15);
+    text-align: center;
+}
+
+.footer-copyright p {
+    font-size: 0.85rem;
+    color: #999;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.developer-link {
+    color: #8b6f47;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid transparent;
+}
+
+.developer-link:hover {
+    color: #d4a574;
+    border-bottom-color: #d4a574;
+}
+
 .admin-link {
     position: fixed;
     top: 15px;
@@ -1033,105 +1060,219 @@ body {
 
 .companion-item {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding: 8px;
-    background: var(--accent-color);
-    border-radius: 6px;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #faf8f5 100%);
+    border: 2px solid #e8dcc8;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(139, 111, 71, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.companion-item:hover {
+    box-shadow: 0 4px 16px rgba(139, 111, 71, 0.15);
+    border-color: #d4a574;
+    transform: translateY(-2px);
 }
 
 .companion-input-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     flex: 1;
 }
 
 .companion-field-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .companion-label {
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 600;
     color: #8b6f47;
     font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
 }
 
 .companion-item input.companion-input,
 .companion-item input.companion-birthdate {
     flex: 1;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    padding: 12px 16px;
+    border: 2px solid #e0d5c0;
+    border-radius: 8px;
+    font-size: 0.95rem;
     width: 100%;
+    background: #ffffff;
+    color: #2c2c2c;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.companion-item input.companion-input::placeholder,
+.companion-item input.companion-birthdate::placeholder {
+    color: #999;
+    font-style: italic;
 }
 
 .companion-item input.companion-input:focus,
 .companion-item input.companion-birthdate:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.1);
+    box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.15);
+    background: #fffefb;
 }
 
 .btn-remove-companion {
-    background: #e74c3c;
-    color: var(--white);
+    background: transparent;
+    color: #e74c3c;
     border: none;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 0;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
     flex-shrink: 0;
+    box-shadow: none;
+    font-weight: 400;
+    line-height: 1;
+    padding: 0;
 }
 
 .btn-remove-companion:hover {
-    background: #c0392b;
+    background: transparent;
+    color: #c0392b;
+    transform: scale(1.2) rotate(90deg);
+    box-shadow: none;
 }
 
 .btn-add-companion {
-    background: transparent;
+    background: linear-gradient(135deg, #ffffff 0%, #faf8f5 100%);
     color: var(--primary-color);
-    border: 2px dashed var(--primary-color);
-    padding: 10px 16px;
-    border-radius: 8px;
+    border: 2px dashed #d4a574;
+    padding: 14px 20px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-family: 'Poppins', sans-serif;
-    font-weight: 500;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 0.3s ease;
     width: 100%;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(139, 111, 71, 0.08);
+    margin-top: 10px;
 }
 
 .btn-add-companion:hover {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: var(--white);
     border-style: solid;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(139, 111, 71, 0.2);
+}
+
+.btn-add-companion:active {
+    transform: translateY(0);
+}
+
+.btn-add-companion:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f0e8;
+    color: #999;
+    border-color: #ddd;
+}
+
+.btn-add-companion:disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(139, 111, 71, 0.08);
+    background: #f5f0e8;
+    color: #999;
 }
 
 .btn-add-companion span {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 300;
+    line-height: 1;
 }
 
 .helper-text {
-    font-size: 0.85rem;
-    color: var(--text-light);
-    margin-top: 6px;
+    font-size: 0.88rem;
+    color: #8b6f47;
+    margin-top: 12px;
     font-style: italic;
+    text-align: center;
+    padding: 8px 12px;
+    background: rgba(212, 165, 116, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #d4a574;
+}
+
+.field-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    margin-bottom: 0;
+    padding: 10px 14px;
+    background: rgba(220, 53, 69, 0.12);
+    border-left: 3px solid #dc3545;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    animation: slideDown 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#companionsGroup {
+    margin-top: 25px;
+    padding: 25px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 248, 245, 0.9) 100%);
+    border-radius: 12px;
+    border: 1px solid #e8dcc8;
+    box-shadow: 0 2px 12px rgba(139, 111, 71, 0.06);
+}
+
+#companionsGroup > label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: #8b6f47;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: block;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+#companionsList {
+    margin-bottom: 20px;
 }
 
 .btn-submit {
@@ -1469,6 +1610,34 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.admin-notification {
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    animation: slideInMessage 0.3s ease;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    font-weight: 500;
+}
+
+.admin-notification.success {
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #c3e6cb;
+}
+
+.admin-notification.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
 }
 
 .btn-gift-list {
@@ -2286,19 +2455,55 @@ body {
     margin-bottom: 20px;
 }
 
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
 .search-box input {
     flex: 1;
-    padding: 12px 16px;
+    padding: 12px 40px 12px 16px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
     transition: border-color 0.3s ease;
+    width: 100%;
 }
 
 .search-box input:focus {
     outline: none;
     border-color: #8b6f47;
+}
+
+.btn-clear-search {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+.btn-clear-search:hover {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.btn-clear-search:active {
+    transform: scale(0.9);
 }
 
 .btn-search {
@@ -2342,6 +2547,45 @@ body {
 
 .pagination-info p {
     margin: 0;
+}
+
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #faf8f5;
+    border-radius: 8px;
+    border: 1px solid #e8dcc8;
+}
+
+.sort-controls label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #8b6f47;
+    margin: 0;
+}
+
+.sort-select {
+    padding: 8px 12px;
+    border: 2px solid #e0d5c0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    color: #2c2c2c;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    max-width: 200px;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
 }
 
 .results-list {
@@ -3121,6 +3365,26 @@ body {
 }
 
 @media (max-width: 768px) {
+    .config-checkbox-group {
+        flex-direction: column !important;
+        gap: 15px !important;
+        align-items: flex-start !important;
+    }
+    
+    .config-checkbox-label {
+        white-space: normal !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .config-checkbox-label span {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+}
+
+@media (max-width: 768px) {
     .pagination-controls {
         gap: 5px;
     }
@@ -3129,5 +3393,53 @@ body {
         padding: 8px 12px;
         font-size: 0.85rem;
         min-width: 35px;
+    }
+    
+    .companion-item {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        position: relative;
+    }
+    
+    .btn-remove-companion {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        font-size: 1.1rem;
+        box-shadow: none;
+        background: transparent;
+        color: #e74c3c;
+        z-index: 10;
+    }
+    
+    .btn-remove-companion:hover {
+        transform: scale(1.3) rotate(90deg);
+        color: #c0392b;
+        box-shadow: none;
+    }
+    
+    #companionsGroup {
+        padding: 20px 15px;
+        margin-top: 20px;
+    }
+    
+    #companionsGroup > label {
+        font-size: 1.15rem;
+        margin-bottom: 18px;
+    }
+    
+    .companion-item input.companion-input,
+    .companion-item input.companion-birthdate {
+        padding: 11px 14px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-add-companion {
+        padding: 12px 18px;
+        font-size: 0.9rem;
     }
 }
