@@ -35,12 +35,14 @@ async function saveGuestToFirestore(guest) {
                 const querySnapshot = await getDocs(q);
                 
                 if (!querySnapshot.empty) {
-                    // Atualizar documento existente
+                    // Atualizar documento existente (não alterar dateAdded)
                     const docRef = querySnapshot.docs[0];
-                    await setDoc(doc(guestsRef, docRef.id), guest, { merge: true });
+                    const { dateAdded: _, ...guestData } = guest;
+                    await setDoc(doc(guestsRef, docRef.id), guestData, { merge: true });
                     console.log('Convidado atualizado no Firestore');
                 } else {
-                    // Adicionar novo documento
+                    // Adicionar novo documento (com data de inserção)
+                    guest.dateAdded = guest.dateAdded || new Date().toISOString();
                     await addDoc(guestsRef, guest);
                     console.log('Novo convidado adicionado ao Firestore');
                 }

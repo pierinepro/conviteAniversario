@@ -49,8 +49,8 @@ async function saveGuestToFirestore(guest) {
             console.log('isValidId:', isValidId);
             
             if (isValidId) {
-                // Remover o id do objeto antes de salvar (não deve ser salvo como campo)
-                const { id, firestoreId: _, ...guestData } = guest;
+                // Atualização (edição): não enviar dateAdded para não alterar a data de inserção
+                const { id, firestoreId: _, dateAdded: __, ...guestData } = guest;
                 console.log('Atualizando documento com ID:', firestoreIdString);
                 console.log('Dados a serem salvos:', guestData);
                 
@@ -68,24 +68,28 @@ async function saveGuestToFirestore(guest) {
                     const querySnapshot = await getDocs(q);
                     
                     if (!querySnapshot.empty) {
-                        // Atualizar documento existente
+                        // Atualizar documento existente (edição): não enviar dateAdded
                         const docRef = querySnapshot.docs[0];
-                        const { id, firestoreId: _, ...guestData } = guest;
+                        const { id, firestoreId: _, dateAdded: __, ...guestData } = guest;
                         guest.id = docRef.id; // Salvar o ID para futuras atualizações
                         await setDoc(doc(guestsRef, docRef.id), guestData, { merge: true });
                         console.log('Convidado atualizado pelo nome:', docRef.id);
                     } else {
                         // Adicionar novo documento
                         const { id, firestoreId: _, ...guestData } = guest;
+                        guestData.dateAdded = guestData.dateAdded || new Date().toISOString();
                         const docRef = await addDoc(guestsRef, guestData);
-                        guest.id = docRef.id; // Salvar o ID
+                        guest.id = docRef.id;
+                        guest.dateAdded = guestData.dateAdded;
                         console.log('Novo convidado criado:', docRef.id);
                     }
                 } else {
                     // Se não tem nome, criar novo documento
                     const { id, firestoreId: _, ...guestData } = guest;
+                    guestData.dateAdded = guestData.dateAdded || new Date().toISOString();
                     const docRef = await addDoc(guestsRef, guestData);
-                    guest.id = docRef.id; // Salvar o ID
+                    guest.id = docRef.id;
+                    guest.dateAdded = guestData.dateAdded;
                     console.log('Novo convidado criado (sem nome):', docRef.id);
                 }
             }
@@ -242,6 +246,7 @@ const editCompanionsGroup = document.getElementById('editCompanionsGroup');
 
 // Variáveis para controle
 let guestToDelete = null;
+let pendingDeleteCompanion = null; // { guest, companionIndex } ao excluir acompanhante
 let guestToEdit = null;
 
 // Função para atualizar estatísticas
@@ -922,7 +927,7 @@ if (searchInput) {
 }
 
 // Variável para ordenação
-let sortOrder = 'name'; // 'name' ou 'none'
+let sortOrder = 'name'; // 'name', 'none', 'newest' (data), 'newestById' (ID)
 
 // Variável para controlar se deve resetar página
 let shouldResetPage = true;
@@ -1035,6 +1040,21 @@ function displaySearchResults(results, searchTerm = '') {
         return;
     }
     
+    // Ordenar por data de inserção ou ID (mais recente primeiro) quando não há busca
+    if (!searchTerm && (sortOrder === 'newest' || sortOrder === 'newestById')) {
+        results = [...results].sort((a, b) => {
+            if (sortOrder === 'newest') {
+                const da = a.dateAdded || '';
+                const db = b.dateAdded || '';
+                return db.localeCompare(da); // mais recente primeiro
+            } else {
+                const ida = (a.id != null) ? String(a.id) : '';
+                const idb = (b.id != null) ? String(b.id) : '';
+                return idb.localeCompare(ida); // maior ID primeiro (aproximação de mais recente)
+            }
+        });
+    }
+    
     // PRIMEIRO: Expandir TODOS os resultados para incluir acompanhantes
     const expandedResults = [];
     results.forEach(guest => {
@@ -1090,6 +1110,7 @@ function displaySearchResults(results, searchTerm = '') {
             return nameA.localeCompare(nameB, 'pt-BR');
         });
     }
+    // sortOrder 'newest' e 'newestById': ordem já aplicada em results antes de expandir
     
     // DEPOIS: Calcular paginação dos resultados expandidos
     const totalExpanded = expandedResults.length;
@@ -1112,6 +1133,8 @@ function displaySearchResults(results, searchTerm = '') {
         <select id="sortSelect" class="sort-select" onchange="changeSortOrder(this.value)">
             <option value="none" ${sortOrder === 'none' ? 'selected' : ''}>Sem ordenação</option>
             <option value="name" ${sortOrder === 'name' ? 'selected' : ''}>Nome (A-Z)</option>
+            <option value="newest" ${sortOrder === 'newest' ? 'selected' : ''}>Mais recentes primeiro (DATA)</option>
+            <option value="newestById" ${sortOrder === 'newestById' ? 'selected' : ''}>Mais antigo primeiro (ID)</option>
         </select>
     </div>`;
     
@@ -1483,6 +1506,8 @@ window.deleteGuest = function(guestId) {
         guestToDelete = guest;
     }
     
+    pendingDeleteCompanion = null;
+    
     if (deleteConfirmModal) {
         const message = document.getElementById('deleteConfirmMessage');
         if (message) {
@@ -1521,8 +1546,8 @@ window.deleteGuest = function(guestId) {
     }
 };
 
-// Função global para excluir acompanhante
-window.deleteCompanion = async function(guestId, companionIndex) {
+// Função global para excluir acompanhante (abre modal com senha)
+window.deleteCompanion = function(guestId, companionIndex) {
     const guest = guestsList.find(g => (g.id && g.id.toString() === guestId) || g.name === guestId);
     
     if (!guest || !guest.companions || !guest.companions[companionIndex]) {
@@ -1533,31 +1558,33 @@ window.deleteCompanion = async function(guestId, companionIndex) {
     const companion = guest.companions[companionIndex];
     const companionName = typeof companion === 'object' ? (companion.name || '') : (companion || '');
     
-    if (confirm(`Tem certeza que deseja excluir o acompanhante "${companionName}"?`)) {
-        guest.companions.splice(companionIndex, 1);
-        await saveGuestToFirestore(guest);
-        
-        // Atualizar lista local
-        const index = guestsList.findIndex(g => 
-            (g.id && g.id === guest.id) || 
-            (g.name && g.name === guest.name)
-        );
-        if (index !== -1) {
-            guestsList[index] = guest;
+    pendingDeleteCompanion = { guest, companionIndex };
+    guestToDelete = null;
+    
+    if (deleteConfirmModal) {
+        const messageEl = document.getElementById('deleteConfirmMessage');
+        if (messageEl) {
+            messageEl.innerHTML = `Tem certeza que deseja excluir o acompanhante <strong>"${companionName}"</strong>?<br><br>Para confirmar, digite sua senha abaixo.`;
         }
-        
-        await updateAdminStats();
-        performSearch(); // Atualizar resultados da busca
-        showAdminNotification('Acompanhante excluído com sucesso!', 'success');
+        const passwordInput = document.getElementById('deletePassword');
+        const passwordError = document.getElementById('deletePasswordError');
+        if (passwordInput) {
+            passwordInput.value = '';
+            setTimeout(() => passwordInput.focus(), 300);
+        }
+        if (passwordError) {
+            passwordError.style.display = 'none';
+        }
+        deleteConfirmModal.style.display = 'flex';
     }
 };
 
-// Confirmar exclusão
+// Confirmar exclusão (convidado ou acompanhante)
 if (confirmDeleteBtn) {
     confirmDeleteBtn.addEventListener('click', async function(e) {
         e.preventDefault();
         
-        if (!guestToDelete) {
+        if (!guestToDelete && !pendingDeleteCompanion) {
             return;
         }
         
@@ -1657,30 +1684,52 @@ if (confirmDeleteBtn) {
         }
         
         try {
-            await deleteGuestFromFirestore(guestToDelete);
-            
-            // Limpar campo de senha
-            if (passwordInput) {
-                passwordInput.value = '';
+            if (pendingDeleteCompanion) {
+                const { guest, companionIndex } = pendingDeleteCompanion;
+                // Clonar o array de acompanhantes antes de alterar, para não afetar outras referências
+                guest.companions = (guest.companions && Array.isArray(guest.companions))
+                    ? guest.companions.filter((_, i) => i !== companionIndex)
+                    : [];
+                await saveGuestToFirestore(guest);
+                // Atualizar todas as ocorrências deste convidado na lista para a mesma referência
+                const guestId = guest.id != null ? String(guest.id) : '';
+                const guestName = (guest.name && guest.name.trim()) || '';
+                guestsList = guestsList.map(g => {
+                    const match = (g.id != null && String(g.id) === guestId) ||
+                        (guestName && g.name && g.name.trim() === guestName);
+                    return match ? guest : g;
+                });
+                // Remover duplicatas (manter apenas a primeira ocorrência por id/nome)
+                const seen = new Set();
+                guestsList = guestsList.filter(g => {
+                    const key = (g.id != null ? String(g.id) : '') || (g.name && g.name.trim()) || '';
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+                saveToLocalStorage();
+                pendingDeleteCompanion = null;
+                if (passwordInput) passwordInput.value = '';
+                if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
+                showAdminNotification('Acompanhante excluído com sucesso!', 'success');
+                await updateAdminStats();
+                performSearch();
+            } else {
+                await deleteGuestFromFirestore(guestToDelete);
+                if (passwordInput) passwordInput.value = '';
+                guestToDelete = null;
+                if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
+                showAdminNotification('Convidado excluído com sucesso!', 'success');
+                await updateAdminStats();
+                performSearch();
             }
-            
-            guestToDelete = null;
-            if (deleteConfirmModal) {
-                deleteConfirmModal.style.display = 'none';
-            }
-            
-            // Mostrar mensagem de sucesso
-            showAdminNotification('Convidado excluído com sucesso!', 'success');
-            
-            await updateAdminStats();
-            performSearch(); // Atualizar resultados da busca
         } catch (error) {
-            console.error('Erro ao excluir convidado:', error);
-            showAdminNotification('Erro ao excluir convidado: ' + error.message, 'error');
+            console.error('Erro ao excluir:', error);
+            showAdminNotification('Erro ao excluir: ' + error.message, 'error');
         } finally {
             if (confirmDeleteBtn) {
                 confirmDeleteBtn.disabled = false;
-                confirmDeleteBtn.textContent = 'Confirmar Exclusão';
+                confirmDeleteBtn.textContent = 'Excluir';
             }
         }
     });
@@ -1700,6 +1749,7 @@ if (cancelDeleteBtn) {
         }
         
         guestToDelete = null;
+        pendingDeleteCompanion = null;
         if (deleteConfirmModal) {
             deleteConfirmModal.style.display = 'none';
         }
@@ -1719,6 +1769,7 @@ if (closeDeleteModal) {
         }
         
         guestToDelete = null;
+        pendingDeleteCompanion = null;
         if (deleteConfirmModal) {
             deleteConfirmModal.style.display = 'none';
         }
