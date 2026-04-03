@@ -1,6 +1,92 @@
 // Lista de convidados - será carregada do Firestore
 let guestsList = [];
 
+window.guestListControl = { maxPeople: 0, listClosed: false };
+window.rsvpRegistrationLocked = false;
+
+function countPeopleForGuest(g) {
+    const n = g && g.companions && Array.isArray(g.companions) ? g.companions.length : 0;
+    return 1 + n;
+}
+
+function countTotalPeople(guests) {
+    if (!guests || !Array.isArray(guests)) return 0;
+    return guests.reduce((sum, g) => sum + countPeopleForGuest(g), 0);
+}
+
+async function loadGuestListControl() {
+    let maxPeople = 0;
+    let listClosed = false;
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'guestListControl');
+            const configDoc = await getDoc(configRef);
+            if (configDoc.exists()) {
+                const d = configDoc.data();
+                maxPeople = typeof d.maxPeople === 'number' && !isNaN(d.maxPeople) ? d.maxPeople : parseInt(d.maxPeople, 10) || 0;
+                listClosed = d.listClosed === true;
+                localStorage.setItem('guestListMaxPeople', String(maxPeople));
+                localStorage.setItem('guestListClosed', listClosed ? 'true' : 'false');
+                window.guestListControl = { maxPeople, listClosed };
+                return window.guestListControl;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar controle da lista:', error);
+        }
+    }
+    const storedMax = localStorage.getItem('guestListMaxPeople');
+    const storedClosed = localStorage.getItem('guestListClosed');
+    if (storedMax !== null && storedMax !== '') {
+        maxPeople = parseInt(storedMax, 10);
+        if (isNaN(maxPeople) || maxPeople < 0) maxPeople = 0;
+    }
+    listClosed = storedClosed === 'true';
+    window.guestListControl = { maxPeople, listClosed };
+    return window.guestListControl;
+}
+
+function applyRsvpRegistrationLock() {
+    const ctl = window.guestListControl || { maxPeople: 0, listClosed: false };
+    const msgClosed = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+    const msgLimit = 'O limite de vagas para o evento foi atingido. Novas confirmações não estão disponíveis pelo site. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+    
+    let blocked = false;
+    let message = '';
+    if (ctl.listClosed) {
+        blocked = true;
+        message = msgClosed;
+    } else if (ctl.maxPeople > 0) {
+        const total = countTotalPeople(guestsList);
+        if (total >= ctl.maxPeople) {
+            blocked = true;
+            message = msgLimit;
+        }
+    }
+    
+    window.rsvpRegistrationLocked = blocked;
+    
+    const msgEl = document.getElementById('rsvpBlockedMessage');
+    const form = document.getElementById('rsvpForm');
+    if (msgEl) {
+        if (blocked) {
+            msgEl.style.display = 'block';
+            msgEl.textContent = message;
+        } else {
+            msgEl.style.display = 'none';
+            msgEl.textContent = '';
+        }
+    }
+    if (form) {
+        form.querySelectorAll('input, select, textarea, button').forEach(el => {
+            el.disabled = blocked;
+        });
+    }
+    if (typeof window.updateAddCompanionButton === 'function') {
+        window.updateAddCompanionButton();
+    }
+}
+
 // Função para verificar se Firebase está configurado
 function isFirebaseConfigured() {
     const hasDb = window.firebaseDb && window.firebaseDb !== null && 
@@ -85,10 +171,12 @@ async function loadGuestsFromFirestore() {
             const querySnapshot = await getDocs(guestsRef);
             
             guestsList = [];
-            querySnapshot.forEach((doc) => {
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
                 guestsList.push({
-                    id: doc.id,
-                    ...doc.data()
+                    ...data,
+                    id: docSnap.id,
+                    firestoreId: docSnap.id
                 });
             });
             
@@ -485,6 +573,7 @@ function initializeFormElements() {
     // Configurar botão de adicionar acompanhante
     if (addCompanionBtn) {
         addCompanionBtn.addEventListener('click', async function() {
+            if (window.rsvpRegistrationLocked) return;
             // Verificar limite atual
             const currentCompanions = document.querySelectorAll('.companion-item').length;
             
@@ -532,6 +621,13 @@ function initializeFormElements() {
     // Função para atualizar estado do botão de adicionar acompanhante (global)
     window.updateAddCompanionButton = function() {
         if (!addCompanionBtn) return;
+        
+        if (window.rsvpRegistrationLocked) {
+            addCompanionBtn.disabled = true;
+            addCompanionBtn.style.opacity = '0.5';
+            addCompanionBtn.style.cursor = 'not-allowed';
+            return;
+        }
         
         const currentCompanions = document.querySelectorAll('.companion-item').length;
         
@@ -706,6 +802,23 @@ function setupFormSubmit() {
         e.preventDefault();
         console.log('Formulário submetido!');
         
+        await loadGuestListControl();
+        await loadGuestsFromFirestore();
+        
+        if (window.guestListControl.listClosed) {
+            const msgEl = document.getElementById('rsvpBlockedMessage');
+            const text = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.textContent = text;
+                msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alert(text);
+            }
+            applyRsvpRegistrationLock();
+            return;
+        }
+        
         const guestNameEl = document.getElementById('guestName');
         const attendanceRadio = document.querySelector('input[name="attendance"]:checked');
         
@@ -874,6 +987,44 @@ function setupFormSubmit() {
             }
         }
         
+        await loadGuestListControl();
+        await loadGuestsFromFirestore();
+        const ctlSubmit = window.guestListControl;
+        if (ctlSubmit.listClosed) {
+            const msgEl = document.getElementById('rsvpBlockedMessage');
+            const text = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.textContent = text;
+                msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alert(text);
+            }
+            applyRsvpRegistrationLock();
+            return;
+        }
+        if (ctlSubmit.maxPeople > 0) {
+            const nameLower = guestName.toLowerCase();
+            const proposed = 1 + companions.length;
+            const totalOthers = guestsList.reduce((s, g) => {
+                if ((g.name || '').toLowerCase() === nameLower) return s;
+                return s + countPeopleForGuest(g);
+            }, 0);
+            if (totalOthers + proposed > ctlSubmit.maxPeople) {
+                const msgEl = document.getElementById('rsvpBlockedMessage');
+                const errText = `Não há vagas suficientes para esta confirmação (limite de ${ctlSubmit.maxPeople} pessoa(s) no evento). Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).`;
+                if (msgEl) {
+                    msgEl.style.display = 'block';
+                    msgEl.textContent = errText;
+                    msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    alert(errText);
+                }
+                if (guestNameEl) guestNameEl.focus();
+                return;
+            }
+        }
+        
         // Criar objeto do convidado
         const guest = {
             id: Date.now(),
@@ -912,6 +1063,7 @@ function setupFormSubmit() {
             console.log('Chamando loadGuestsFromFirestore...');
             guestsList = await loadGuestsFromFirestore();
             console.log('Lista atualizada. Total de convidados:', guestsList.length);
+            applyRsvpRegistrationLock();
             
             // Mostrar modal apropriado baseado na resposta
             if (attendance === 'yes') {
@@ -1227,8 +1379,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 100);
     setupFormSubmit();
     
-    // Carregar convidados do Firestore ou localStorage
+    await loadGuestListControl();
     await loadGuestsFromFirestore();
+    applyRsvpRegistrationLock();
     console.log('Convidados registrados:', guestsList.length);
     
     if (!isFirebaseConfigured()) {

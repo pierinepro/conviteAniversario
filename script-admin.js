@@ -120,10 +120,13 @@ async function loadGuestsFromFirestore() {
             const querySnapshot = await getDocs(guestsRef);
             
             guestsList = [];
-            querySnapshot.forEach((doc) => {
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                // id do documento Firestore é a fonte da verdade (campo id dentro de data pode sobrescrever errado)
                 guestsList.push({
-                    id: doc.id,
-                    ...doc.data()
+                    ...data,
+                    id: docSnap.id,
+                    firestoreId: docSnap.id
                 });
             });
             
@@ -226,6 +229,9 @@ const enableEmailField = document.getElementById('enableEmailField');
 const enablePhoneField = document.getElementById('enablePhoneField');
 const enableBirthDateField = document.getElementById('enableBirthDateField');
 const saveFieldsConfigBtn = document.getElementById('saveFieldsConfigBtn');
+const guestListMaxPeopleInput = document.getElementById('guestListMaxPeople');
+const guestListClosedCheckbox = document.getElementById('guestListClosed');
+const saveGuestListControlBtn = document.getElementById('saveGuestListControlBtn');
 
 // Modais
 const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -565,6 +571,7 @@ async function loadAdminData() {
         // Carregar configurações
         await loadCompanionLimit();
         await loadFieldsConfig();
+        await loadGuestListControl();
         
         // Executar busca inicial (mostra todos os convidados paginados)
         performSearch();
@@ -1811,26 +1818,24 @@ if (addEditCompanionBtn) {
     });
 }
 
-// Salvar edição - Registrar após DOM carregar
-document.addEventListener('DOMContentLoaded', function() {
+// Salvar edição — um único listener (evita submit duplicado e cadastros duplicados)
+function bindEditFormSubmitOnce() {
     const editFormElement = document.getElementById('editForm');
-    if (editFormElement) {
-        console.log('Formulário de edição encontrado e registrado');
-        editFormElement.addEventListener('submit', handleEditSubmit);
-    } else {
-        console.error('Formulário de edição não encontrado no DOMContentLoaded!');
-    }
-});
-
-// Também tentar registrar imediatamente (caso o DOM já esteja carregado)
-if (editForm) {
-    console.log('Formulário de edição encontrado imediatamente');
-    editForm.addEventListener('submit', handleEditSubmit);
+    if (!editFormElement || editFormElement.dataset.submitBound === '1') return;
+    editFormElement.dataset.submitBound = '1';
+    editFormElement.addEventListener('submit', handleEditSubmit);
+    console.log('Formulário de edição: listener de submit registrado (único)');
 }
+document.addEventListener('DOMContentLoaded', bindEditFormSubmitOnce);
+bindEditFormSubmitOnce();
 
 async function handleEditSubmit(e) {
     e.preventDefault();
     console.log('Formulário de edição submetido');
+    
+    if (handleEditSubmit._saving) {
+        return;
+    }
     
     if (!guestToEdit) {
         console.error('guestToEdit não definido');
@@ -1954,6 +1959,7 @@ async function handleEditSubmit(e) {
     
     // Salvar no Firestore
     try {
+        handleEditSubmit._saving = true;
         console.log('📤 Chamando saveGuestToFirestore com:', updatedGuest);
         console.log('📤 updatedGuest.id:', updatedGuest.id);
         console.log('📤 updatedGuest.firestoreId:', updatedGuest.firestoreId);
@@ -1963,35 +1969,8 @@ async function handleEditSubmit(e) {
         console.log('✅ saveGuestToFirestore concluído com sucesso');
         console.log('✅ updatedGuest.id após salvar:', updatedGuest.id);
         
-        // Atualizar lista local usando APENAS o ID (não o nome, pois pode ter mudado)
-        const index = guestsList.findIndex(g => {
-            // Usar APENAS o ID para encontrar o convidado
-            if (g.id && originalId && g.id === originalId) return true;
-            if (g.id && guestToEdit.id && g.id === guestToEdit.id) return true;
-            return false;
-        });
-        
-        if (index !== -1) {
-            // Atualizar o item existente mantendo o ID
-            guestsList[index] = { ...updatedGuest, id: originalId };
-            console.log('Lista local atualizada pelo ID:', originalId);
-        } else {
-            // Se não encontrou pelo ID, tentar pelo nome antigo (fallback)
-            const indexByName = guestsList.findIndex(g => {
-                return g.name && guestToEdit.name && g.name === guestToEdit.name;
-            });
-            
-            if (indexByName !== -1) {
-                // Atualizar usando o ID encontrado
-                const existingId = guestsList[indexByName].id;
-                guestsList[indexByName] = { ...updatedGuest, id: existingId || originalId };
-                console.log('Lista local atualizada pelo nome (fallback):', existingId || originalId);
-            } else {
-                // Se não encontrou de forma alguma, adicionar com o ID original
-                guestsList.push({ ...updatedGuest, id: originalId });
-                console.log('Convidado adicionado à lista local com ID:', originalId);
-            }
-        }
+        // Recarregar lista do Firestore (evita duplicatas na UI e corrige id inconsistente)
+        await loadGuestsFromFirestore();
         
         // Mostrar mensagem de sucesso ANTES de fechar o modal
         showEditMessage('Convidado atualizado com sucesso!', 'success');
@@ -2012,6 +1991,8 @@ async function handleEditSubmit(e) {
         const errorMessage = error.message || 'Erro ao salvar alterações. Tente novamente.';
         showEditMessage(`Erro: ${errorMessage}`, 'error');
         // NÃO recarregar a página em caso de erro para que o usuário possa ver a mensagem
+    } finally {
+        handleEditSubmit._saving = false;
     }
 }
 
@@ -2239,6 +2220,77 @@ async function saveCompanionLimit(limit) {
     }
 }
 
+async function loadGuestListControl() {
+    let maxPeople = 0;
+    let listClosed = false;
+    
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'guestListControl');
+            const configDoc = await getDoc(configRef);
+            
+            if (configDoc.exists()) {
+                const d = configDoc.data();
+                maxPeople = typeof d.maxPeople === 'number' && !isNaN(d.maxPeople) ? d.maxPeople : parseInt(d.maxPeople, 10) || 0;
+                listClosed = d.listClosed === true;
+                localStorage.setItem('guestListMaxPeople', String(maxPeople));
+                localStorage.setItem('guestListClosed', listClosed ? 'true' : 'false');
+                if (guestListMaxPeopleInput) guestListMaxPeopleInput.value = maxPeople;
+                if (guestListClosedCheckbox) guestListClosedCheckbox.checked = listClosed;
+                console.log('Controle da lista de convidados carregado:', { maxPeople, listClosed });
+                return { maxPeople, listClosed };
+            }
+        } catch (error) {
+            console.error('Erro ao carregar guestListControl:', error);
+        }
+    }
+    
+    const storedMax = localStorage.getItem('guestListMaxPeople');
+    const storedClosed = localStorage.getItem('guestListClosed');
+    if (storedMax !== null && storedMax !== '') {
+        maxPeople = parseInt(storedMax, 10);
+        if (isNaN(maxPeople) || maxPeople < 0) maxPeople = 0;
+    }
+    listClosed = storedClosed === 'true';
+    
+    if (guestListMaxPeopleInput) guestListMaxPeopleInput.value = maxPeople;
+    if (guestListClosedCheckbox) guestListClosedCheckbox.checked = listClosed;
+    return { maxPeople, listClosed };
+}
+
+async function saveGuestListControl() {
+    const raw = guestListMaxPeopleInput ? guestListMaxPeopleInput.value : '0';
+    const maxPeople = parseInt(raw, 10);
+    if (isNaN(maxPeople) || maxPeople < 0) {
+        return { success: false, message: 'Digite um número válido (0 = sem limite).' };
+    }
+    const listClosed = guestListClosedCheckbox ? guestListClosedCheckbox.checked : false;
+    
+    localStorage.setItem('guestListMaxPeople', String(maxPeople));
+    localStorage.setItem('guestListClosed', listClosed ? 'true' : 'false');
+    
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'guestListControl');
+            await setDoc(configRef, { maxPeople, listClosed }, { merge: true });
+            console.log('guestListControl salvo no Firestore:', { maxPeople, listClosed });
+            return { success: true, message: '✅ Limite da lista e opção de encerramento salvos com sucesso!' };
+        } catch (error) {
+            console.error('Erro ao salvar guestListControl:', error);
+            if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+                return {
+                    success: true,
+                    message: '✅ Salvo localmente. Configure as regras do Firestore para a coleção config se quiser sincronizar na nuvem.'
+                };
+            }
+            return { success: true, message: '✅ Salvo localmente (Firebase indisponível).' };
+        }
+    }
+    return { success: true, message: '✅ Configurações salvas localmente!' };
+}
+
 // Função para carregar configurações de campos
 async function loadFieldsConfig() {
     if (isFirebaseConfigured()) {
@@ -2379,6 +2431,17 @@ if (saveCompanionLimitBtn) {
         saveCompanionLimitBtn.textContent = '💾 Salvar';
         
         showConfigMessage('companionLimitMessage', result.message, result.success);
+    });
+}
+
+if (saveGuestListControlBtn) {
+    saveGuestListControlBtn.addEventListener('click', async function() {
+        saveGuestListControlBtn.disabled = true;
+        saveGuestListControlBtn.textContent = '💾 Salvando...';
+        const result = await saveGuestListControl();
+        saveGuestListControlBtn.disabled = false;
+        saveGuestListControlBtn.textContent = '💾 Salvar';
+        showConfigMessage('guestListControlMessage', result.message, result.success);
     });
 }
 
@@ -2696,6 +2759,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Carregar configurações de campos
     await loadFieldsConfig();
+    await loadGuestListControl();
     
     // Carregar convidados do Firestore ou localStorage
     await loadGuestsFromFirestore();

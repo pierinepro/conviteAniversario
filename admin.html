@@ -137,6 +137,23 @@
                     </div>
                     
                     <div class="config-item">
+                        <label for="guestListMaxPeople">Limite total de pessoas na lista (convidado principal + acompanhantes):</label>
+                        <div class="config-input-group">
+                            <input type="number" id="guestListMaxPeople" min="0" max="2000" value="0" class="config-input" title="0 = sem limite">
+                            <button class="btn-save-config" id="saveGuestListControlBtn">💾 Salvar</button>
+                        </div>
+                        <div id="guestListControlMessage" class="config-message" style="display: none;"></div>
+                        <p class="config-description">Conta todas as pessoas já confirmadas (cada cadastro = 1 + quantidade de acompanhantes). Ao atingir o limite, o formulário do convite fica desabilitado para novas confirmações. Use 0 para não limitar.</p>
+                        <div class="config-checkbox-group" style="margin-top: 12px;">
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="guestListClosed" class="config-checkbox">
+                                <span>Encerrar lista de confirmações</span>
+                            </label>
+                        </div>
+                        <p class="config-description">Quando marcado, ninguém consegue enviar confirmação pelo site; será exibida uma mensagem para contatar os noivos.</p>
+                    </div>
+                    
+                    <div class="config-item">
                         <label>Campos do Formulário:</label>
                         <div class="config-checkbox-group">
                             <label class="config-checkbox-label">

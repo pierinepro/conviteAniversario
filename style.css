@@ -860,6 +860,22 @@ body {
     font-size: 0.95rem;
 }
 
+.rsvp-blocked-message {
+    margin: 0 auto 22px;
+    max-width: 600px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 2px solid #c0392b;
+    background: #fdecea;
+    color: #7b241c;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
 .rsvp-form {
     max-width: 600px;
     margin: 0 auto;
