@@ -2,6 +2,27 @@
 // Lista de convidados - será carregada do Firestore
 let guestsList = [];
 
+/**
+ * Mesma coleção que em script.js — altere nos dois arquivos para outro convite.
+ * Ex.: 'guests_giovanna' cria uma coleção separada no Firestore.
+ */
+const FIRESTORE_GUESTS_COLLECTION = 'guests';
+
+function guestListLocalStorageKey() {
+    return FIRESTORE_GUESTS_COLLECTION === 'guests'
+        ? 'weddingGuests'
+        : ('weddingGuests_' + FIRESTORE_GUESTS_COLLECTION);
+}
+
+/** URL absoluta do index.html do convite (para links no PDF). */
+function getInviteIndexAbsoluteUrl() {
+    if (typeof window === 'undefined' || !window.location) return '';
+    const path = window.location.pathname || '';
+    const dir = path.replace(/[^/]*$/, '');
+    const base = dir.endsWith('/') ? dir : (dir + '/');
+    return window.location.origin + base + 'index.html';
+}
+
 // Variáveis de paginação
 let currentPage = 1;
 const itemsPerPage = 10; // Itens por página
@@ -30,9 +51,9 @@ async function saveGuestToFirestore(guest) {
     
     if (isFirebaseConfigured()) {
         try {
-            const { collection, addDoc, setDoc, doc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, addDoc, setDoc, doc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             
-            const guestsRef = collection(window.firebaseDb, 'guests');
+            const guestsRef = collection(window.firebaseDb, FIRESTORE_GUESTS_COLLECTION);
             
             // Se o convidado tem um ID do Firestore (id ou firestoreId), atualizar diretamente
             const firestoreId = guest.id || guest.firestoreId;
@@ -114,9 +135,9 @@ async function saveGuestToFirestore(guest) {
 async function loadGuestsFromFirestore() {
     if (isFirebaseConfigured()) {
         try {
-            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             
-            const guestsRef = collection(window.firebaseDb, 'guests');
+            const guestsRef = collection(window.firebaseDb, FIRESTORE_GUESTS_COLLECTION);
             const querySnapshot = await getDocs(guestsRef);
             
             guestsList = [];
@@ -147,7 +168,7 @@ async function loadGuestsFromFirestore() {
 // Funções de fallback para localStorage
 function saveToLocalStorage() {
     try {
-        localStorage.setItem('weddingGuests', JSON.stringify(guestsList));
+        localStorage.setItem(guestListLocalStorageKey(), JSON.stringify(guestsList));
     } catch (error) {
         console.error('Erro ao salvar no localStorage:', error);
     }
@@ -155,7 +176,7 @@ function saveToLocalStorage() {
 
 function loadFromLocalStorage() {
     try {
-        const stored = localStorage.getItem('weddingGuests');
+        const stored = localStorage.getItem(guestListLocalStorageKey());
         guestsList = stored ? JSON.parse(stored) : [];
         return guestsList;
     } catch (error) {
@@ -232,6 +253,11 @@ const saveFieldsConfigBtn = document.getElementById('saveFieldsConfigBtn');
 const guestListMaxPeopleInput = document.getElementById('guestListMaxPeople');
 const guestListClosedCheckbox = document.getElementById('guestListClosed');
 const saveGuestListControlBtn = document.getElementById('saveGuestListControlBtn');
+const inviteNavEnableLocation = document.getElementById('inviteNavEnableLocation');
+const inviteNavEnableDress = document.getElementById('inviteNavEnableDress');
+const inviteNavEnableRsvp = document.getElementById('inviteNavEnableRsvp');
+const inviteNavEnableGiftList = document.getElementById('inviteNavEnableGiftList');
+const saveInviteNavConfigBtn = document.getElementById('saveInviteNavConfigBtn');
 
 // Modais
 const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -427,7 +453,7 @@ if (adminLoginForm) {
         // Tentar autenticar com Firebase
         if (isFirebaseConfigured() && window.firebaseAuth) {
             try {
-                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js');
                 
                 await signInWithEmailAndPassword(window.firebaseAuth, email, password);
                 
@@ -512,7 +538,7 @@ if (adminLogoutMobile) {
         // Fazer logout do Firebase se estiver autenticado
         if (isFirebaseConfigured() && window.firebaseAuth) {
             try {
-                const { signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                const { signOut } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js');
                 await signOut(window.firebaseAuth);
             } catch (error) {
                 console.error('Erro ao fazer logout:', error);
@@ -539,7 +565,7 @@ if (adminLogout) {
         // Fazer logout do Firebase se estiver autenticado
         if (isFirebaseConfigured() && window.firebaseAuth) {
             try {
-                const { signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                const { signOut } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js');
                 await signOut(window.firebaseAuth);
             } catch (error) {
                 console.error('Erro ao fazer logout:', error);
@@ -572,6 +598,7 @@ async function loadAdminData() {
         await loadCompanionLimit();
         await loadFieldsConfig();
         await loadGuestListControl();
+        await loadInviteNavConfig();
         
         // Executar busca inicial (mostra todos os convidados paginados)
         performSearch();
@@ -593,7 +620,7 @@ async function checkAuthState() {
     
     if (isFirebaseConfigured() && window.firebaseAuth) {
         try {
-            const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+            const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js');
             
             // Verificar estado de autenticação
             onAuthStateChanged(window.firebaseAuth, async (user) => {
@@ -718,7 +745,7 @@ if (confirmClearBtn) {
         if (isFirebaseConfigured() && window.firebaseAuth) {
             try {
                 // Verificar se o usuário está autenticado e a senha está correta
-                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js');
                 
                 // Obter o e-mail do usuário atual autenticado
                 const currentUser = window.firebaseAuth.currentUser;
@@ -1623,7 +1650,7 @@ if (confirmDeleteBtn) {
         
         if (isFirebaseConfigured() && window.firebaseAuth) {
             try {
-                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js');
                 
                 // Obter o e-mail do usuário atual autenticado
                 const currentUser = window.firebaseAuth.currentUser;
@@ -2063,9 +2090,9 @@ function showAdminNotification(message, type = 'success') {
 async function deleteGuestFromFirestore(guest) {
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, deleteDoc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, deleteDoc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             
-            const guestsRef = collection(window.firebaseDb, 'guests');
+            const guestsRef = collection(window.firebaseDb, FIRESTORE_GUESTS_COLLECTION);
             
             // Se tem ID do Firestore, usar diretamente
             if (guest.id && typeof guest.id === 'string' && guest.id.length > 0) {
@@ -2113,9 +2140,9 @@ async function clearAllGuests() {
     if (isFirebaseConfigured()) {
         try {
             console.log('Limpando Firestore...');
-            const { collection, getDocs, deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, getDocs, deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             
-            const guestsRef = collection(window.firebaseDb, 'guests');
+            const guestsRef = collection(window.firebaseDb, FIRESTORE_GUESTS_COLLECTION);
             const querySnapshot = await getDocs(guestsRef);
             
             console.log(`Encontrados ${querySnapshot.size} documentos para excluir`);
@@ -2152,7 +2179,7 @@ async function clearAllGuests() {
 async function loadCompanionLimit() {
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'companionLimit');
             const configDoc = await getDoc(configRef);
             
@@ -2199,7 +2226,7 @@ async function saveCompanionLimit(limit) {
     
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'companionLimit');
             await setDoc(configRef, { limit: limitValue }, { merge: true });
             console.log('Limite de acompanhantes salvo no Firestore:', limitValue);
@@ -2226,7 +2253,7 @@ async function loadGuestListControl() {
     
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'guestListControl');
             const configDoc = await getDoc(configRef);
             
@@ -2272,7 +2299,7 @@ async function saveGuestListControl() {
     
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'guestListControl');
             await setDoc(configRef, { maxPeople, listClosed }, { merge: true });
             console.log('guestListControl salvo no Firestore:', { maxPeople, listClosed });
@@ -2291,11 +2318,98 @@ async function saveGuestListControl() {
     return { success: true, message: '✅ Configurações salvas localmente!' };
 }
 
+const INVITE_NAV_DEFAULTS = {
+    enableLocation: true,
+    enableDress: true,
+    enableRsvp: true,
+    enableGiftList: true
+};
+
+function inviteNavFromStorage() {
+    try {
+        const s = localStorage.getItem('inviteNavConfig');
+        if (!s) return { ...INVITE_NAV_DEFAULTS };
+        const p = JSON.parse(s);
+        return {
+            enableLocation: p.enableLocation !== false,
+            enableDress: p.enableDress !== false,
+            enableRsvp: p.enableRsvp !== false,
+            enableGiftList: p.enableGiftList !== false
+        };
+    } catch {
+        return { ...INVITE_NAV_DEFAULTS };
+    }
+}
+
+function applyInviteNavCheckboxes(cfg) {
+    if (inviteNavEnableLocation) inviteNavEnableLocation.checked = cfg.enableLocation !== false;
+    if (inviteNavEnableDress) inviteNavEnableDress.checked = cfg.enableDress !== false;
+    if (inviteNavEnableRsvp) inviteNavEnableRsvp.checked = cfg.enableRsvp !== false;
+    if (inviteNavEnableGiftList) inviteNavEnableGiftList.checked = cfg.enableGiftList !== false;
+}
+
+async function loadInviteNavConfig() {
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'inviteNavConfig');
+            const configDoc = await getDoc(configRef);
+            if (configDoc.exists()) {
+                const d = configDoc.data();
+                const cfg = {
+                    enableLocation: d.enableLocation !== false,
+                    enableDress: d.enableDress !== false,
+                    enableRsvp: d.enableRsvp !== false,
+                    enableGiftList: d.enableGiftList !== false
+                };
+                localStorage.setItem('inviteNavConfig', JSON.stringify(cfg));
+                applyInviteNavCheckboxes(cfg);
+                console.log('inviteNavConfig carregado:', cfg);
+                return cfg;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar inviteNavConfig:', error);
+        }
+    }
+    const cfg = inviteNavFromStorage();
+    applyInviteNavCheckboxes(cfg);
+    return cfg;
+}
+
+async function saveInviteNavConfig() {
+    const cfg = {
+        enableLocation: inviteNavEnableLocation ? inviteNavEnableLocation.checked : true,
+        enableDress: inviteNavEnableDress ? inviteNavEnableDress.checked : true,
+        enableRsvp: inviteNavEnableRsvp ? inviteNavEnableRsvp.checked : true,
+        enableGiftList: inviteNavEnableGiftList ? inviteNavEnableGiftList.checked : true
+    };
+    localStorage.setItem('inviteNavConfig', JSON.stringify(cfg));
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'inviteNavConfig');
+            await setDoc(configRef, cfg, { merge: true });
+            console.log('inviteNavConfig salvo no Firestore:', cfg);
+            return { success: true, message: '✅ Botões do convite salvos com sucesso!' };
+        } catch (error) {
+            console.error('Erro ao salvar inviteNavConfig:', error);
+            if (error.code === 'permission-denied' || (error.message && error.message.includes('permission'))) {
+                return {
+                    success: true,
+                    message: '✅ Salvo localmente. Ajuste as regras do Firestore para a coleção config se quiser sincronizar na nuvem.'
+                };
+            }
+            return { success: true, message: '✅ Salvo localmente (Firebase indisponível).' };
+        }
+    }
+    return { success: true, message: '✅ Botões do convite salvos localmente!' };
+}
+
 // Função para carregar configurações de campos
 async function loadFieldsConfig() {
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'fieldsConfig');
             const configDoc = await getDoc(configRef);
             
@@ -2369,7 +2483,7 @@ async function saveFieldsConfig() {
     
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'fieldsConfig');
             await setDoc(configRef, config, { merge: true });
             console.log('Configurações de campos salvas no Firestore:', config);
@@ -2463,6 +2577,17 @@ if (saveFieldsConfigBtn) {
         } else {
             showConfigMessage('fieldsConfigMessage', '❌ Erro ao salvar configurações. Tente novamente.', false);
         }
+    });
+}
+
+if (saveInviteNavConfigBtn) {
+    saveInviteNavConfigBtn.addEventListener('click', async function() {
+        saveInviteNavConfigBtn.disabled = true;
+        saveInviteNavConfigBtn.textContent = '💾 Salvando...';
+        const result = await saveInviteNavConfig();
+        saveInviteNavConfigBtn.disabled = false;
+        saveInviteNavConfigBtn.textContent = '💾 Salvar botões do convite';
+        showConfigMessage('inviteNavConfigMessage', result.message, result.success);
     });
 }
 
@@ -2596,157 +2721,192 @@ window.downloadGiftListPDF = async function downloadGiftListPDF() {
     }
 }
 
-// Função para baixar PDF do convite
+/** PDF do convite a partir de pdf-invite-giovanna.html (html2pdf + links clicáveis). */
 async function downloadInvitationPDF() {
     try {
-        // Carregar a biblioteca html2pdf se ainda não estiver carregada
         if (typeof html2pdf === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
             document.head.appendChild(script);
-            
-            // Aguardar o script carregar
             await new Promise((resolve, reject) => {
                 script.onload = resolve;
                 script.onerror = reject;
-                setTimeout(() => reject(new Error('Timeout ao carregar html2pdf')), 10000);
+                setTimeout(() => reject(new Error('Timeout ao carregar html2pdf')), 12000);
             });
         }
 
-        // Carregar o template do PDF
-        const response = await fetch('pdf-template.html');
+        const inviteBase = getInviteIndexAbsoluteUrl();
+        const response = await fetch('pdf-invite-giovanna.html');
         if (!response.ok) {
-            throw new Error('Não foi possível carregar pdf-template.html. Verifique se o arquivo existe.');
+            throw new Error('Não foi possível carregar pdf-invite-giovanna.html');
         }
-        const htmlContent = await response.text();
-        
-        // Criar um parser para extrair o conteúdo do template
+        let htmlContent = await response.text();
+        htmlContent = htmlContent.split('__INVITE_BASE__').join(inviteBase);
+
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlContent, 'text/html');
-        
-        // Criar um container temporário oculto no DOM
+
+        // Fora da tela mas visível (sem opacity:0 / z-index negativo) — html2canvas ignora ou corta mal conteúdo “invisível”.
         const tempContainer = document.createElement('div');
+        tempContainer.setAttribute('aria-hidden', 'true');
         tempContainer.style.position = 'fixed';
         tempContainer.style.left = '-9999px';
         tempContainer.style.top = '0';
-        tempContainer.style.width = '800px';
-        tempContainer.style.height = '1131px';
-        tempContainer.style.overflow = 'hidden';
-        tempContainer.style.backgroundColor = '#ffffff';
+        tempContainer.style.width = '540px';
+        tempContainer.style.height = 'auto';
+        tempContainer.style.overflow = 'visible';
+        tempContainer.style.backgroundColor = '#fff5f8';
+        tempContainer.style.pointerEvents = 'none';
         document.body.appendChild(tempContainer);
-        
-        // Copiar os estilos do template
-        const styles = doc.querySelectorAll('style');
-        styles.forEach(style => {
-            const styleEl = document.createElement('style');
-            styleEl.textContent = style.textContent;
-            tempContainer.appendChild(styleEl);
+
+        doc.querySelectorAll('style').forEach((style) => {
+            const el = document.createElement('style');
+            el.textContent = style.textContent;
+            tempContainer.appendChild(el);
         });
-        
-        // Copiar os links de fontes
-        const fontLinks = doc.querySelectorAll('link[rel="stylesheet"]');
-        fontLinks.forEach(link => {
+
+        const appendedFontLinks = [];
+        doc.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
             const linkEl = document.createElement('link');
             linkEl.rel = 'stylesheet';
             linkEl.href = link.href;
             document.head.appendChild(linkEl);
+            appendedFontLinks.push(linkEl);
         });
-        
-        // Copiar o elemento do convite
-        const templateElement = doc.getElementById('convite');
-        if (!templateElement) {
+
+        const captureRoot = doc.getElementById('invitePdfCaptureRoot');
+        if (!captureRoot) {
             document.body.removeChild(tempContainer);
-            throw new Error('Elemento do convite não encontrado no template');
+            appendedFontLinks.forEach((l) => l.remove());
+            throw new Error('invitePdfCaptureRoot não encontrado no template');
         }
-        
-        // Clonar o elemento e adicionar ao container
-        const clonedElement = templateElement.cloneNode(true);
-        tempContainer.appendChild(clonedElement);
-        
-        // Aguardar as fontes carregarem e o elemento renderizar
+
+        const clone = captureRoot.cloneNode(true);
+        clone.style.margin = '0';
+        clone.style.display = 'flex';
+        clone.style.boxSizing = 'border-box';
+        clone.style.width = '100%';
+        clone.style.maxWidth = '540px';
+        tempContainer.appendChild(clone);
+
         await new Promise((resolve) => {
             if (document.fonts && document.fonts.ready) {
-                document.fonts.ready.then(() => {
-                    setTimeout(resolve, 1500);
-                });
+                document.fonts.ready.then(() => setTimeout(resolve, 1600));
             } else {
-                setTimeout(resolve, 2500);
+                setTimeout(resolve, 2200);
             }
         });
-        
-        // Verificar se o elemento está visível
-        if (!clonedElement.offsetHeight || !clonedElement.offsetWidth) {
+
+        const imgs = clone.querySelectorAll('img');
+        await Promise.all(
+            Array.from(imgs).map(
+                (img) =>
+                    img.complete
+                        ? Promise.resolve()
+                        : new Promise((r) => {
+                              img.onload = r;
+                              img.onerror = r;
+                          })
+            )
+        );
+
+        await new Promise((r) => setTimeout(r, 300));
+        clone.offsetHeight;
+
+        if (!clone.offsetHeight) {
             document.body.removeChild(tempContainer);
-            throw new Error('Elemento não está renderizado corretamente');
+            appendedFontLinks.forEach((l) => l.remove());
+            throw new Error('Cartão do PDF não renderizou');
         }
-        
-        // Forçar reflow para garantir renderização
-        clonedElement.offsetHeight;
-        
-        // Log para debug
-        console.log('Elemento clonado:', {
-            width: clonedElement.offsetWidth,
-            height: clonedElement.offsetHeight,
-            hasContent: clonedElement.innerHTML.length > 0
+
+        const rootRect = clone.getBoundingClientRect();
+        const linkRects = [];
+        clone.querySelectorAll('a[href]').forEach((a) => {
+            const r = a.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+                linkRects.push({
+                    x: r.left - rootRect.left,
+                    y: r.top - rootRect.top,
+                    w: r.width,
+                    h: r.height,
+                    url: a.getAttribute('href') || a.href
+                });
+            }
         });
-        
-        // Configurações do PDF
+
+        const pw = Math.max(
+            1,
+            Math.ceil(clone.offsetWidth || clone.getBoundingClientRect().width),
+            Math.ceil(clone.scrollWidth)
+        );
+        const ph = Math.max(
+            1,
+            Math.ceil(clone.offsetHeight || clone.getBoundingClientRect().height),
+            Math.ceil(clone.scrollHeight)
+        );
+
         const opt = {
-            filename: 'Convite_Erli_e_Francisco.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
+            margin: [0, 0, 0, 0],
+            filename: 'Convite_Giovanna.pdf',
+            image: { type: 'png', quality: 1 },
             html2canvas: {
-                scale: 0.95,
+                scale: 2,
                 useCORS: true,
-                backgroundColor: '#ffffff',
+                allowTaint: true,
                 logging: false,
-                allowTaint: false,
+                backgroundColor: '#fff5f8',
                 letterRendering: true
             },
             jsPDF: {
                 unit: 'px',
-                format: [800, 1131],
+                format: [pw, ph],
                 orientation: 'portrait',
+                hotfixes: ['px_scaling'],
                 compress: true,
                 precision: 16
             },
-            pagebreak: { 
-                mode: ['avoid-all', 'css', 'legacy']
-            },
-            margin: [0, 0, 0, 0]
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
-        
-        // Gerar o PDF e manipular para remover página em branco
-        const worker = html2pdf()
-            .set(opt)
-            .from(clonedElement);
-        
-        // Usar toPdf para ter controle sobre o PDF gerado
-        await worker.toPdf().get('pdf').then((pdf) => {
-            // Verificar e remover primeira página se estiver em branco
-            const totalPages = pdf.internal.getNumberOfPages();
-            if (totalPages > 1) {
-                // Remover a primeira página (que está em branco)
-                pdf.deletePage(1);
-            }
-        }).save();
-        
-        // Remover o container temporário e links de fontes após um pequeno delay
+
+        const worker = html2pdf().set(opt).from(clone);
+        await worker
+            .toPdf()
+            .get('pdf')
+            .then((pdf) => {
+                let n = pdf.internal.getNumberOfPages();
+                while (n > 1) {
+                    pdf.deletePage(n);
+                    n--;
+                }
+                linkRects.forEach((rect) => {
+                    try {
+                        if (rect.url) {
+                            pdf.link(rect.x, rect.y, rect.w, rect.h, { url: rect.url });
+                        }
+                    } catch (e) {
+                        console.warn('Link no PDF:', e);
+                    }
+                });
+            })
+            .save();
+
         setTimeout(() => {
             if (tempContainer.parentNode) {
-                document.body.removeChild(tempContainer);
+                tempContainer.parentNode.removeChild(tempContainer);
             }
-            fontLinks.forEach(() => {
-                const lastLink = document.head.querySelector('link[rel="stylesheet"]:last-of-type');
-                if (lastLink && lastLink.href.includes('fonts.googleapis.com')) {
-                    document.head.removeChild(lastLink);
+            appendedFontLinks.forEach((l) => {
+                try {
+                    l.remove();
+                } catch (e) {
+                    /* ignore */
                 }
             });
-        }, 1000);
-        
-        console.log('PDF gerado com sucesso!');
+        }, 800);
+
+        console.log('PDF do convite gerado (HTML → html2pdf).');
     } catch (error) {
         console.error('Erro ao gerar PDF:', error);
-        alert('❌ Erro ao gerar PDF: ' + error.message);
+        alert('Erro ao gerar PDF: ' + error.message);
     }
 }
 
@@ -2760,6 +2920,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Carregar configurações de campos
     await loadFieldsConfig();
     await loadGuestListControl();
+    await loadInviteNavConfig();
     
     // Carregar convidados do Firestore ou localStorage
     await loadGuestsFromFirestore();

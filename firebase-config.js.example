@@ -4,10 +4,11 @@
 // 3. Adicione firebase-config.js ao .gitignore (se usar Git)
 
 window.FIREBASE_CONFIG = {
-    apiKey: "SUA_API_KEY_AQUI",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto-id",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
+    apiKey: 'SUA_API_KEY_AQUI',
+    authDomain: 'seu-projeto.firebaseapp.com',
+    projectId: 'seu-projeto-id',
+    storageBucket: 'seu-projeto.firebasestorage.app',
+    messagingSenderId: '123456789',
+    appId: '1:123456789:web:abcdef',
+    measurementId: 'G-XXXXXXXXXX' // opcional; só se usar Analytics
 };

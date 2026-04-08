@@ -3,36 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convite de Casamento - Erli & Francisco</title>
+    <title>Aniversário da Giovanna 🎈</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎂%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
     
     <!-- Firebase SDK -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-        import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-        
-        // Your web app's Firebase configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js';
+        import { getAnalytics, isSupported } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js';
+
         const firebaseConfig = {
-            apiKey: "AIzaSyCtugbMBTNZh30gDJIO8szSTKwe7FuyZcY",
-            authDomain: "convite-casamento-d15b7.firebaseapp.com",
-            projectId: "convite-casamento-d15b7",
-            storageBucket: "convite-casamento-d15b7.firebasestorage.app",
-            messagingSenderId: "393452119488",
-            appId: "1:393452119488:web:3a5a62a535d021bb81d425"
+            apiKey: 'AIzaSyDl5CrVg8NtTmHt8ly39KUqu9oDpsghCwE',
+            authDomain: 'convitegiovanna-ceef0.firebaseapp.com',
+            projectId: 'convitegiovanna-ceef0',
+            storageBucket: 'convitegiovanna-ceef0.firebasestorage.app',
+            messagingSenderId: '797002433700',
+            appId: '1:797002433700:web:d6b470969fcabb3fded231',
+            measurementId: 'G-99G3258GN5'
         };
-        
-        // Initialize Firebase
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        
-        // Disponibilizar globalmente
+        isSupported().then((ok) => {
+            if (ok) getAnalytics(app);
+        });
+
         window.firebaseApp = app;
         window.firebaseDb = db;
         window.firebaseAuth = auth;
@@ -48,62 +49,160 @@
     
     <!-- Menu Mobile -->
     <div class="mobile-menu" id="mobileMenu">
-        <a href="admin.html" class="mobile-menu-item">🔐 Área Administrativa</a>
+        <a href="admin.html" class="mobile-menu-item"><img class="mobile-menu-ico" data-emoji-code="1f510" alt="" width="20" height="20"> Área Administrativa</a>
     </div>
     
-    <!-- Porta de Entrada -->
-    <div id="doorIntro" class="door-intro">
-        <div class="door-container">
-            <div class="door-left"></div>
-            <div class="door-right"></div>
-            <div class="door-content">
-                <div class="door-ornament-top"></div>
-                <h2 class="door-title">Erli & Francisco</h2>
-                <p class="door-subtitle">Clique para entrar</p>
-                <div class="door-ornament-bottom"></div>
+    <!-- Abertura: criança puxando a cortina -->
+    <div id="curtainIntro" class="curtain-intro" role="button" tabindex="0" aria-label="Abrir o convite">
+        <div class="curtain-party-bg" aria-hidden="true"></div>
+        <div class="curtain-rail" aria-hidden="true"></div>
+        <div class="curtain-panels">
+            <div class="curtain-panel curtain-panel-left"></div>
+            <div class="curtain-panel curtain-panel-right"></div>
+        </div>
+        <div class="curtain-center-content">
+            <img class="curtain-balloon" data-emoji-code="1f388" alt="" width="72" height="72" aria-hidden="true">
+            <h2 class="curtain-title">É hora da festa!</h2>
+            <p class="curtain-subtitle">Toque para abrir a cortina</p>
+        </div>
+        <div class="curtain-child-layer" aria-hidden="true">
+            <div class="curtain-child-pull">
+                <svg class="curtain-child-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cordas até a cortina -->
+                    <line x1="72" y1="118" x2="72" y2="0" stroke="#5d4037" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="128" y1="118" x2="128" y2="0" stroke="#5d4037" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Corpo -->
+                    <ellipse cx="100" cy="52" rx="28" ry="30" fill="#ffcc80"/>
+                    <!-- Cabelo -->
+                    <path d="M72 48 Q100 8 128 48 Q120 22 100 18 Q80 22 72 48" fill="#5d4037"/>
+                    <!-- Olhos -->
+                    <circle cx="88" cy="50" r="4" fill="#3e2723"/>
+                    <circle cx="112" cy="50" r="4" fill="#3e2723"/>
+                    <circle cx="89" cy="49" r="1.2" fill="#fff"/>
+                    <circle cx="113" cy="49" r="1.2" fill="#fff"/>
+                    <!-- Sorriso -->
+                    <path d="M88 62 Q100 72 112 62" fill="none" stroke="#c62828" stroke-width="2" stroke-linecap="round"/>
+                    <!-- Camiseta -->
+                    <path d="M68 78 L60 125 L140 125 L132 78 Q100 88 68 78" fill="#7e57c2"/>
+                    <!-- Braços -->
+                    <path d="M68 82 L52 108 L58 115 L72 92" fill="#ffcc80"/>
+                    <path d="M132 82 L148 108 L142 115 L128 92" fill="#ffcc80"/>
+                    <!-- Mãos na corda -->
+                    <circle cx="58" cy="112" r="7" fill="#ffcc80"/>
+                    <circle cx="142" cy="112" r="7" fill="#ffcc80"/>
+                    <!-- Shorts -->
+                    <path d="M60 125 L55 165 L100 158 L145 165 L140 125 Z" fill="#42a5f5"/>
+                    <!-- Pernas -->
+                    <rect x="78" y="158" width="14" height="38" rx="4" fill="#ffcc80"/>
+                    <rect x="108" y="158" width="14" height="38" rx="4" fill="#ffcc80"/>
+                    <!-- Sapatos -->
+                    <ellipse cx="85" cy="200" rx="16" ry="8" fill="#ef5350"/>
+                    <ellipse cx="115" cy="200" rx="16" ry="8" fill="#ef5350"/>
+                </svg>
             </div>
         </div>
     </div>
 
     <div class="container" id="mainContent" style="display: none;">
-        <!-- Hero Section com Imagem -->
-        <section class="hero-romantic">
-            <div class="hero-image-wrapper">
-                <div class="hero-image-overlay"></div>
-                <img src="images/casal.jpg" alt="Erli e Francisco" class="hero-image" loading="eager" fetchpriority="high">
-                <div class="torn-paper-edge"></div>
-            </div>
-            <div class="hero-content-romantic">
-                <h1 class="couple-names-romantic">Erli Pierine<br>&<br>Francisco Rodrigues</h1>
-                <p class="hero-subtitle-romantic">Convidamos você para presenciar este momento tão especial</p>
-                <div class="date-romantic">
-                    <div class="flourish-left">🌿</div>
-                    <div class="date-content">
-                        <p class="date-main">28.02.2026</p>
-                        <p class="date-day">Sábado</p>
-                        <p class="date-time">às 11h</p>
-                    </div>
-                    <div class="flourish-right">🌿</div>
+        <!-- Balões sobem quando o convite abre (fora do .container no fluxo: fixed) -->
+        <div class="festa-balloons-layer" id="festaBalloons" aria-hidden="true">
+            <span class="festa-balloon festa-balloon--1"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--2"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--3"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--4"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--5"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--6"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--7"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+            <span class="festa-balloon festa-balloon--8"><img data-emoji-code="1f388" alt="" width="48" height="48"></span>
+        </div>
+        <!-- Hero: convite pastel (estilo cartão) -->
+        <section class="hero-birthday invite-pastel invite-pastel--interactive" aria-labelledby="invite-name-heading" id="inviteHero">
+            <div class="invite-pastel-pattern" aria-hidden="true"></div>
+            <svg class="invite-pastel-deco" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 820" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <ellipse cx="72" cy="88" rx="52" ry="26" fill="rgba(255,255,255,0.72)"/>
+                <ellipse cx="108" cy="96" rx="38" ry="22" fill="rgba(255,255,255,0.65)"/>
+                <ellipse cx="328" cy="62" rx="48" ry="24" fill="rgba(255,255,255,0.55)"/>
+                <ellipse cx="360" cy="68" rx="32" ry="18" fill="rgba(255,255,255,0.5)"/>
+                <g fill="#fff" opacity="0.85">
+                    <path d="M312 168l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>
+                    <path d="M48 240l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>
+                    <path d="M352 420l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>
+                    <path d="M28 520l4 9 9 4-9 4-4 9-4-9-9-4 9-4z"/>
+                    <path d="M368 300l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/>
+                </g>
+                <g transform="translate(268,36)">
+                    <path d="M8 44 A36 36 0 0 1 72 44" fill="none" stroke="#f48fb1" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M14 44 A30 30 0 0 1 66 44" fill="none" stroke="#4dd0e1" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M20 44 A24 24 0 0 1 60 44" fill="none" stroke="#ffb74d" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M26 44 A18 18 0 0 1 54 44" fill="none" stroke="#fff176" stroke-width="4" stroke-linecap="round"/>
+                </g>
+                <circle cx="318" cy="38" r="20" fill="#fff176"/>
+                <circle cx="310" cy="34" r="2.2" fill="#5d4037"/>
+                <circle cx="324" cy="34" r="2.2" fill="#5d4037"/>
+                <path d="M310 42 Q318 47 326 42" fill="none" stroke="#5d4037" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="306" cy="40" r="3.5" fill="#f8bbd9" opacity="0.85"/>
+                <circle cx="330" cy="40" r="3.5" fill="#f8bbd9" opacity="0.85"/>
+                <g transform="translate(28,118)">
+                    <rect x="0" y="22" width="46" height="38" rx="5" fill="#ff9800"/>
+                    <rect x="17" y="12" width="12" height="52" fill="#fff"/>
+                    <rect x="-4" y="32" width="54" height="10" fill="#fff"/>
+                </g>
+                <g transform="translate(298,248)">
+                    <rect x="0" y="20" width="40" height="34" rx="4" fill="#ffeb3b"/>
+                    <rect x="14" y="10" width="12" height="48" fill="#fff"/>
+                    <rect x="-4" y="28" width="48" height="9" fill="#fff"/>
+                </g>
+                <g transform="translate(24,598)">
+                    <rect x="0" y="18" width="42" height="36" rx="4" fill="#f48fb1"/>
+                    <rect x="15" y="8" width="12" height="50" fill="#fff"/>
+                    <rect x="-4" y="26" width="50" height="9" fill="#fff"/>
+                </g>
+                <g transform="translate(200,698)">
+                    <path d="M-175 0 A175 175 0 0 1 175 0" fill="none" stroke="#f48fb1" stroke-width="16" stroke-linecap="round"/>
+                    <path d="M-158 0 A158 158 0 0 1 158 0" fill="none" stroke="#4dd0e1" stroke-width="13" stroke-linecap="round"/>
+                    <path d="M-141 0 A141 141 0 0 1 141 0" fill="none" stroke="#ffb74d" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M-124 0 A124 124 0 0 1 124 0" fill="none" stroke="#fff176" stroke-width="8" stroke-linecap="round"/>
+                </g>
+                <circle cx="88" cy="628" r="22" fill="#fff176"/>
+                <circle cx="78" cy="623" r="2.5" fill="#5d4037"/>
+                <circle cx="96" cy="623" r="2.5" fill="#5d4037"/>
+                <path d="M78 632 Q88 638 98 632" fill="none" stroke="#5d4037" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="74" cy="628" r="4" fill="#f8bbd9" opacity="0.8"/>
+                <circle cx="102" cy="628" r="4" fill="#f8bbd9" opacity="0.8"/>
+            </svg>
+            <div class="invite-pastel-inner">
+                <p class="invite-pastel-kicker">Convidamos você para o aniversário</p>
+                <div class="invite-pastel-photo-ring">
+                    <img src="images/aniversariante.png" alt="Giovanna, aniversariante" class="invite-pastel-photo" width="260" height="260" loading="eager" fetchpriority="high">
                 </div>
+                <h1 class="invite-pastel-name" id="invite-name-heading">Giovanna</h1>
+                <p class="invite-pastel-age"><span>1 ano</span></p>
+                <p class="invite-pastel-date">03 <span class="invite-pastel-sep">|</span> maio <span class="invite-pastel-sep">|</span> 2026</p>
+                <p class="invite-pastel-time">Das 13h às 17h</p>
+                <a class="invite-pastel-venue invite-pastel-venue--link" href="https://www.google.com/maps/search/?api=1&amp;query=R.%20da%20Mooca%2C%203314%20-%20Mooca%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2003165-000" target="_blank" rel="noopener noreferrer" title="Abrir local no mapa">
+                    <p class="invite-pastel-venue-name">Buffet Infantil Aventura e Diversão</p>
+                    <p class="invite-pastel-venue-addr">R. da Mooca, 3314 - Mooca, São Paulo - SP, 03165-000</p>
+                    <span class="invite-pastel-venue-hint">Toque para ver no mapa</span>
+                </a>
             </div>
         </section>
 
         <!-- Seções com Ícones -->
-        <section class="info-icons-section">
+        <section class="info-icons-section invite-animate">
             <div class="info-icon-item" id="locationIcon">
-                <div class="icon-circle">📍</div>
+                <div class="icon-circle"><img data-emoji-code="1f4cd" alt="" width="56" height="56"></div>
                 <p class="icon-label">Localização</p>
             </div>
             <div class="info-icon-item" id="dressIcon">
-                <div class="icon-circle">👔</div>
-                <p class="icon-label">Vestimenta</p>
+                <div class="icon-circle"><img data-emoji-code="1f455" alt="" width="56" height="56"></div>
+                <p class="icon-label">Traje</p>
             </div>
             <div class="info-icon-item" id="rsvpIcon">
-                <div class="icon-circle">💕</div>
-                <p class="icon-label">Confirme</p>
+                <div class="icon-circle"><img data-emoji-code="2728" alt="" width="56" height="56"></div>
+                <p class="icon-label">Confirmar</p>
             </div>
             <div class="info-icon-item" id="giftListIcon">
-                <div class="icon-circle">🎁</div>
+                <div class="icon-circle"><img data-emoji-code="1f381" alt="" width="56" height="56"></div>
                 <p class="icon-label">Lista de Presentes</p>
             </div>
         </section>
@@ -113,12 +212,12 @@
             <!-- Localização -->
             <div class="detail-card" id="locationCard" style="display: none;">
                 <div class="detail-header">
-                    <span class="detail-icon">📍</span>
+                    <span class="detail-icon"><img data-emoji-code="1f4cd" alt="" width="36" height="36"></span>
                     <h2>Localização</h2>
                 </div>
                 <div class="detail-content">
-                    <p class="location-name">Buffet Espaço Rafah</p>
-                    <p class="location-address">Rua Maria Sieglinde 24, Vila Hulda - Centro de Guarulhos</p>
+                    <p class="location-name">Buffet Infantil Aventura e Diversão</p>
+                    <p class="location-address">R. da Mooca, 3314 - Mooca, São Paulo - SP, 03165-000</p>
                     <a href="#" class="map-link" id="mapLink">Ver no mapa</a>
                 </div>
             </div>
@@ -126,19 +225,19 @@
             <!-- Vestimenta -->
             <div class="detail-card" id="dressCard" style="display: none;">
                 <div class="detail-header">
-                    <span class="detail-icon">👔</span>
-                    <h2>Tipo de Vestimenta</h2>
+                    <span class="detail-icon"><img data-emoji-code="1f454" alt="" width="36" height="36"></span>
+                    <h2>Traje / Fantasia</h2>
                 </div>
                 <div class="detail-content">
-                    <p class="dresscode-text">Roupa Esporte Chique</p>
+                    <p class="dresscode-text">Roupa confortável para brincar — fantasias são bem-vindas!</p>
                 </div>
             </div>
 
         <!-- RSVP Section -->
         <section class="rsvp-section-romantic">
             <div class="rsvp-card-romantic" id="rsvpCard" style="display: none;">
-                <h2>Confirme sua Presença</h2>
-                <p class="rsvp-subtitle">Sua presença é muito importante para nós!</p>
+                <h2>Confirme sua presença</h2>
+                <p class="rsvp-subtitle">Contamos com você para tornar este dia ainda mais especial!</p>
                 
                 <div id="rsvpBlockedMessage" class="rsvp-blocked-message" style="display: none;" role="alert"></div>
                 
@@ -217,7 +316,7 @@
             <div class="modal-content">
                 <button class="modal-close" id="closeModal">×</button>
                 <div class="modal-body">
-                    <p class="modal-message">Obrigado pela confirmação, estamos ansiosos para dividir esse momento especial com você</p>
+                    <p class="modal-message">Obrigado pela confirmação! Mal podemos esperar para celebrar com você.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn-gift-list" id="giftListBtn">Ver Lista de Presentes</button>
@@ -230,7 +329,7 @@
             <div class="modal-content">
                 <button class="modal-close" id="closeDeclineModal">×</button>
                 <div class="modal-body">
-                    <p class="modal-message">Que pena que você não poderá estar conosco nesse dia tão especial, mas agradecemos muito pela consideração e pelos bons votos.</p>
+                    <p class="modal-message">Pena que você não poderá vir — mesmo assim, muito obrigado pelo carinho!</p>
                 </div>
             </div>
         </div>
@@ -240,7 +339,7 @@
             <div class="modal-content">
                 <button class="modal-close" id="closeMaybeModal">×</button>
                 <div class="modal-body">
-                    <p class="modal-message">Entendemos sua situação. Pedimos, por gentileza, que nos confirme sua decisão final com até 10 dias de antecedência para que possamos nos organizar da melhor forma. Agradecemos muito a sua compreensão.</p>
+                    <p class="modal-message">Sem problemas! Quando souber, nos avise com antecedência para organizarmos a festinha.</p>
                 </div>
             </div>
         </div>
@@ -250,15 +349,15 @@
             <div class="modal-content modal-gift-list">
                 <button class="modal-close" id="closeGiftListModal">×</button>
                 <div class="modal-body">
-                    <h2 class="gift-list-title">💕 Lista de Presentes</h2>
+                    <h2 class="gift-list-title"><img class="gift-title-ico" data-emoji-code="1f381" alt="" width="32" height="32"> Lista de presentes</h2>
                     
                     <div class="havan-link-section" style="width: 100%; text-align: center; margin-bottom: 30px; padding: 20px; background: #f9f7f4; border-radius: 8px; border: 2px solid #d4a574;">
-                        <p class="havan-link-text" style="font-family: 'Playfair Display', serif; font-size: 1rem; color: #8b6f47; margin-bottom: 12px;">🎁 Acesse nossa lista completa na Havan:</p>
-                        <a href="https://lista.havan.com.br/Convidado/ItensListaPresente/901228" target="_blank" class="havan-link" style="font-family: 'Poppins', sans-serif; font-size: 0.95rem; color: #ffffff; background: #d4a574; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; transition: background 0.3s ease; font-weight: 600;">Ver Lista na Havan</a>
+                        <p class="havan-link-text" style="font-family: 'Fredoka', sans-serif; font-size: 1rem; color: #5e35b1; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;"><img data-emoji-code="1f381" alt="" width="24" height="24"> Acesse nossa lista completa na Havan:</p>
+                        <a href="https://lista.havan.com.br/Convidado/ItensListaPresente/901228" target="_blank" class="havan-link" style="font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: #ffffff; background: #7e57c2; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; transition: background 0.3s ease; font-weight: 600;">Ver Lista na Havan</a>
                     </div>
                     
                     <div class="gift-category">
-                        <h3 class="gift-category-title">🍽️ Louças e Itens para Mesa</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f37d" alt="" width="24" height="24"> Louças e Itens para Mesa</h3>
                         <ul class="gift-list">
                             <li>Aparelho de jantar</li>
                             <li>Faqueiro</li>
@@ -274,7 +373,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">🍲 Utensílios de Cozinha Funcionais</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f372" alt="" width="24" height="24"> Utensílios de Cozinha Funcionais</h3>
                         <ul class="gift-list">
                             <li>Jarra de suco (vidro)</li>
                             <li>Saladeira de vidro</li>
@@ -289,7 +388,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">🍳 Panelas, Formas e Preparos</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f373" alt="" width="24" height="24"> Panelas, Formas e Preparos</h3>
                         <ul class="gift-list">
                             <li>Jogo de panelas</li>
                             <li>Jogo de frigideiras</li>
@@ -306,7 +405,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">⚡ Eletrodomésticos</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="26a1" alt="" width="24" height="24"> Eletrodomésticos</h3>
                         <ul class="gift-list">
                             <li>Air fryer</li>
                             <li>Cafeteira Dolce Gusto</li>
@@ -322,7 +421,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">🧹 Organização e Limpeza</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f9f9" alt="" width="24" height="24"> Organização e Limpeza</h3>
                         <ul class="gift-list">
                             <li>Escorredor de louça slim (Tramontina – aço/polipropileno)</li>
                             <li>Lixeira inteligente 60 L (preta)</li>
@@ -331,7 +430,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">🏡 Conforto e Casa</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f3e0" alt="" width="24" height="24"> Conforto e Casa</h3>
                         <ul class="gift-list">
                             <li>TV Smart 32 polegadas</li>
                             <li>Ventilador de mesa</li>
@@ -339,7 +438,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">🛁 Banheiro/Quarto</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f6c1" alt="" width="24" height="24"> Banheiro/Quarto</h3>
                         <ul class="gift-list">
                             <li>Jogo de toalhas de banho</li>
                             <li>Jogo de lençol com elástico (Queen)</li>
@@ -349,7 +448,7 @@
                     </div>
 
                     <div class="gift-category">
-                        <h3 class="gift-category-title">👕 Rotina e Facilidades</h3>
+                        <h3 class="gift-category-title"><img data-emoji-code="1f455" alt="" width="24" height="24"> Rotina e Facilidades</h3>
                         <ul class="gift-list">
                             <li>Tábua de passar slim</li>
                             <li>Ferro de passar roupa</li>
@@ -372,7 +471,7 @@
                             </div>
                         </div>
                         <div class="delivery-note">
-                            <p class="delivery-note-text">💝 <strong>Observação:</strong> Caso deseje que o presente seja entregue na casa dos noivos, o endereço é:</p>
+                            <p class="delivery-note-text delivery-note-text--sticker"><img data-emoji-code="1f49d" alt="" width="22" height="22"> <strong>Observação:</strong> Caso deseje que o presente seja entregue na casa dos noivos, o endereço é:</p>
                             <p class="delivery-address">R. Jaime Taveira, 91 - AP 38B - Chácara Cruzeiro do Sul, São Paulo - SP, 03732-060</p>
                         </div>
                     </div>
@@ -381,14 +480,14 @@
         </div>
 
         <!-- Footer -->
-        <footer class="footer-romantic">
-            <div class="footer-floral">🌿</div>
+        <footer class="footer-birthday invite-animate">
+            <div class="footer-floral"><img data-emoji-code="1f389" alt="" width="40" height="40"></div>
             <p>Com carinho,</p>
-            <p class="footer-names">Erli Pierine & Francisco Rodrigues</p>
-            <div class="footer-hearts">💕</div>
-            <div class="bible-verse">
-                <p class="verse-text">"Acima de tudo, porém, revistam-se do amor, que é o elo perfeito."</p>
-                <p class="verse-reference">- Colossenses 3: 14</p>
+            <p class="footer-names">Família da Giovanna</p>
+            <div class="footer-hearts"><img data-emoji-code="1f388" alt="" width="36" height="36"></div>
+            <div class="bible-verse footer-quote-kids">
+                <p class="verse-text">“Brincar, rir e comer bolo — a melhor receita de festa!”</p>
+                <p class="verse-reference">Nos vemos lá!</p>
             </div>
             <a href="admin.html" class="admin-link-footer">admin</a>
             <div class="footer-copyright">
@@ -397,6 +496,7 @@
         </footer>
     </div>
 
+    <script src="stickers.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

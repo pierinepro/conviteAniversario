@@ -3,51 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Área Administrativa - Convite de Casamento</title>
+    <title>Área Administrativa - Convite de Aniversário</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎂%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- SheetJS para exportar Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
     <!-- Firebase SDK -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-        import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-        
-        // Your web app's Firebase configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js';
+
         const firebaseConfig = {
-            apiKey: "AIzaSyCtugbMBTNZh30gDJIO8szSTKwe7FuyZcY",
-            authDomain: "convite-casamento-d15b7.firebaseapp.com",
-            projectId: "convite-casamento-d15b7",
-            storageBucket: "convite-casamento-d15b7.firebasestorage.app",
-            messagingSenderId: "393452119488",
-            appId: "1:393452119488:web:3a5a62a535d021bb81d425"
+            apiKey: 'AIzaSyDl5CrVg8NtTmHt8ly39KUqu9oDpsghCwE',
+            authDomain: 'convitegiovanna-ceef0.firebaseapp.com',
+            projectId: 'convitegiovanna-ceef0',
+            storageBucket: 'convitegiovanna-ceef0.firebasestorage.app',
+            messagingSenderId: '797002433700',
+            appId: '1:797002433700:web:d6b470969fcabb3fded231',
+            measurementId: 'G-99G3258GN5'
         };
-        
-        // Initialize Firebase
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        
-        // Disponibilizar globalmente
+
         window.firebaseApp = app;
         window.firebaseDb = db;
         window.firebaseAuth = auth;
     </script>
 </head>
-<body>
+<body class="admin-theme-birthday-girl">
     <div class="admin-page-container">
         <!-- Modal de Login Admin -->
         <div id="adminLoginModal" class="admin-login-page">
             <div class="admin-login-content">
                 <h1 class="admin-login-title">Área Administrativa</h1>
-                <p class="admin-login-subtitle">Convite de Casamento - Erli & Francisco</p>
+                <p class="admin-login-subtitle">Convite de aniversário — painel da festa</p>
                 <form id="adminLoginForm" class="admin-login-form">
                     <div class="form-group">
                         <label for="adminLogin">E-mail</label>
@@ -150,7 +147,32 @@
                                 <span>Encerrar lista de confirmações</span>
                             </label>
                         </div>
-                        <p class="config-description">Quando marcado, ninguém consegue enviar confirmação pelo site; será exibida uma mensagem para contatar os noivos.</p>
+                        <p class="config-description">Quando marcado, ninguém consegue enviar confirmação pelo site; será exibida uma mensagem para contatar a família.</p>
+                    </div>
+                    
+                    <div class="config-item">
+                        <label>Botões do convite (ícones na página principal):</label>
+                        <div class="config-checkbox-group config-checkbox-group-invite-nav">
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="inviteNavEnableLocation" class="config-checkbox" checked>
+                                <span>Mostrar Localização</span>
+                            </label>
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="inviteNavEnableDress" class="config-checkbox" checked>
+                                <span>Mostrar Traje / fantasia</span>
+                            </label>
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="inviteNavEnableRsvp" class="config-checkbox" checked>
+                                <span>Mostrar Confirmar presença</span>
+                            </label>
+                            <label class="config-checkbox-label">
+                                <input type="checkbox" id="inviteNavEnableGiftList" class="config-checkbox" checked>
+                                <span>Mostrar Lista de presentes</span>
+                            </label>
+                        </div>
+                        <button type="button" class="btn-save-config" id="saveInviteNavConfigBtn" style="margin-top: 15px;">💾 Salvar botões do convite</button>
+                        <div id="inviteNavConfigMessage" class="config-message" style="display: none;"></div>
+                        <p class="config-description">Itens desmarcados somem do convite. O botão “Ver lista de presentes” no modal após confirmar também respeita a opção da lista.</p>
                     </div>
                     
                     <div class="config-item">

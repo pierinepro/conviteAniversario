@@ -1,8 +1,98 @@
 // Lista de convidados - será carregada do Firestore
 let guestsList = [];
 
+/**
+ * Coleção Firestore dos convidados deste convite.
+ * Troque para outro nome (ex.: 'guests_giovanna') para usar uma "tabela" separada no mesmo projeto.
+ * Mantém o backup local em chave alinhada (ver guestListLocalStorageKey).
+ */
+const FIRESTORE_GUESTS_COLLECTION = 'guests';
+
+function guestListLocalStorageKey() {
+    return FIRESTORE_GUESTS_COLLECTION === 'guests'
+        ? 'weddingGuests'
+        : ('weddingGuests_' + FIRESTORE_GUESTS_COLLECTION);
+}
+
 window.guestListControl = { maxPeople: 0, listClosed: false };
 window.rsvpRegistrationLocked = false;
+window.inviteNavConfig = {
+    enableLocation: true,
+    enableDress: true,
+    enableRsvp: true,
+    enableGiftList: true
+};
+
+const INVITE_NAV_LS_KEY = 'inviteNavConfig';
+
+function applyInviteNavVisibility() {
+    const c = window.inviteNavConfig || {};
+    const pairs = [
+        ['locationIcon', c.enableLocation !== false],
+        ['dressIcon', c.enableDress !== false],
+        ['rsvpIcon', c.enableRsvp !== false],
+        ['giftListIcon', c.enableGiftList !== false]
+    ];
+    pairs.forEach(([id, show]) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = show ? '' : 'none';
+    });
+    const giftListBtn = document.getElementById('giftListBtn');
+    if (giftListBtn) {
+        giftListBtn.style.display = c.enableGiftList !== false ? '' : 'none';
+    }
+}
+
+async function loadInviteNavConfig() {
+    const defaults = {
+        enableLocation: true,
+        enableDress: true,
+        enableRsvp: true,
+        enableGiftList: true
+    };
+    if (isFirebaseConfigured()) {
+        try {
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
+            const configRef = doc(collection(window.firebaseDb, 'config'), 'inviteNavConfig');
+            const configDoc = await getDoc(configRef);
+            if (configDoc.exists()) {
+                const d = configDoc.data();
+                window.inviteNavConfig = {
+                    enableLocation: d.enableLocation !== false,
+                    enableDress: d.enableDress !== false,
+                    enableRsvp: d.enableRsvp !== false,
+                    enableGiftList: d.enableGiftList !== false
+                };
+                try {
+                    localStorage.setItem(INVITE_NAV_LS_KEY, JSON.stringify(window.inviteNavConfig));
+                } catch (e) { /* ignore */ }
+                applyInviteNavVisibility();
+                return window.inviteNavConfig;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar inviteNavConfig:', error);
+        }
+    }
+    try {
+        const s = localStorage.getItem(INVITE_NAV_LS_KEY);
+        if (s) {
+            const p = JSON.parse(s);
+            window.inviteNavConfig = {
+                ...defaults,
+                enableLocation: p.enableLocation !== false,
+                enableDress: p.enableDress !== false,
+                enableRsvp: p.enableRsvp !== false,
+                enableGiftList: p.enableGiftList !== false
+            };
+        } else {
+            window.inviteNavConfig = { ...defaults };
+        }
+    } catch {
+        window.inviteNavConfig = { ...defaults };
+    }
+    applyInviteNavVisibility();
+    return window.inviteNavConfig;
+}
 
 function countPeopleForGuest(g) {
     const n = g && g.companions && Array.isArray(g.companions) ? g.companions.length : 0;
@@ -19,7 +109,7 @@ async function loadGuestListControl() {
     let listClosed = false;
     if (isFirebaseConfigured()) {
         try {
-            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             const configRef = doc(collection(window.firebaseDb, 'config'), 'guestListControl');
             const configDoc = await getDoc(configRef);
             if (configDoc.exists()) {
@@ -48,8 +138,8 @@ async function loadGuestListControl() {
 
 function applyRsvpRegistrationLock() {
     const ctl = window.guestListControl || { maxPeople: 0, listClosed: false };
-    const msgClosed = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
-    const msgLimit = 'O limite de vagas para o evento foi atingido. Novas confirmações não estão disponíveis pelo site. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+    const msgClosed = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com a família.';
+    const msgLimit = 'O limite de vagas para a festa foi atingido. Novas confirmações não estão disponíveis pelo site. Em caso de dúvida, entre em contato com a família.';
     
     let blocked = false;
     let message = '';
@@ -113,10 +203,10 @@ async function saveGuestToFirestore(guest) {
             
             // Adicionar timeout para não travar indefinidamente
             const firestorePromise = (async () => {
-                const { collection, addDoc, setDoc, doc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+                const { collection, addDoc, setDoc, doc, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
                 
                 // Verificar se o convidado já existe (por nome)
-                const guestsRef = collection(window.firebaseDb, 'guests');
+                const guestsRef = collection(window.firebaseDb, FIRESTORE_GUESTS_COLLECTION);
                 const q = query(guestsRef, where('name', '==', guest.name));
                 const querySnapshot = await getDocs(q);
                 
@@ -165,9 +255,9 @@ async function saveGuestToFirestore(guest) {
 async function loadGuestsFromFirestore() {
     if (isFirebaseConfigured()) {
         try {
-            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
             
-            const guestsRef = collection(window.firebaseDb, 'guests');
+            const guestsRef = collection(window.firebaseDb, FIRESTORE_GUESTS_COLLECTION);
             const querySnapshot = await getDocs(guestsRef);
             
             guestsList = [];
@@ -197,7 +287,7 @@ async function loadGuestsFromFirestore() {
 // Funções de fallback para localStorage
 function saveToLocalStorage() {
     try {
-        localStorage.setItem('weddingGuests', JSON.stringify(guestsList));
+        localStorage.setItem(guestListLocalStorageKey(), JSON.stringify(guestsList));
     } catch (error) {
         console.error('Erro ao salvar no localStorage:', error);
     }
@@ -205,7 +295,7 @@ function saveToLocalStorage() {
 
 function loadFromLocalStorage() {
     try {
-        const stored = localStorage.getItem('weddingGuests');
+        const stored = localStorage.getItem(guestListLocalStorageKey());
         guestsList = stored ? JSON.parse(stored) : [];
         return guestsList;
     } catch (error) {
@@ -354,7 +444,7 @@ function initializeFormElements() {
     if (mapLink) {
         mapLink.addEventListener('click', function(e) {
             e.preventDefault();
-            const address = encodeURIComponent('Rua Maria Sieglinde 24, Vila Hulda - Centro de Guarulhos');
+            const address = encodeURIComponent('R. da Mooca, 3314 - Mooca, São Paulo - SP, 03165-000');
             window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
         });
     }
@@ -447,7 +537,7 @@ function initializeFormElements() {
     async function loadCompanionLimit() {
         if (isFirebaseConfigured()) {
             try {
-                const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+                const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
                 const configRef = doc(collection(window.firebaseDb, 'config'), 'companionLimit');
                 const configDoc = await getDoc(configRef);
                 
@@ -480,7 +570,7 @@ function initializeFormElements() {
     async function loadFieldsConfig() {
         if (isFirebaseConfigured()) {
             try {
-                const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+                const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js');
                 const configRef = doc(collection(window.firebaseDb, 'config'), 'fieldsConfig');
                 const configDoc = await getDoc(configRef);
                 
@@ -807,7 +897,7 @@ function setupFormSubmit() {
         
         if (window.guestListControl.listClosed) {
             const msgEl = document.getElementById('rsvpBlockedMessage');
-            const text = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+            const text = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com a família.';
             if (msgEl) {
                 msgEl.style.display = 'block';
                 msgEl.textContent = text;
@@ -992,7 +1082,7 @@ function setupFormSubmit() {
         const ctlSubmit = window.guestListControl;
         if (ctlSubmit.listClosed) {
             const msgEl = document.getElementById('rsvpBlockedMessage');
-            const text = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).';
+            const text = 'A lista de confirmações já foi encerrada. Em caso de dúvida, entre em contato com a família.';
             if (msgEl) {
                 msgEl.style.display = 'block';
                 msgEl.textContent = text;
@@ -1012,7 +1102,7 @@ function setupFormSubmit() {
             }, 0);
             if (totalOthers + proposed > ctlSubmit.maxPeople) {
                 const msgEl = document.getElementById('rsvpBlockedMessage');
-                const errText = `Não há vagas suficientes para esta confirmação (limite de ${ctlSubmit.maxPeople} pessoa(s) no evento). Em caso de dúvida, entre em contato com os noivos (Erli e Francisco).`;
+                const errText = `Não há vagas suficientes para esta confirmação (limite de ${ctlSubmit.maxPeople} pessoa(s) na festa). Em caso de dúvida, entre em contato com a família.`;
                 if (msgEl) {
                     msgEl.style.display = 'block';
                     msgEl.textContent = errText;
@@ -1207,63 +1297,93 @@ async function exportGuestsList() {
 window.exportGuestsList = exportGuestsList;
 window.getGuestsList = getGuestsList;
 
-// Controle da Porta de Entrada
-const doorIntro = document.getElementById('doorIntro');
+// Abertura: cortina inicial
+const curtainIntro = document.getElementById('curtainIntro');
 const mainContent = document.getElementById('mainContent');
-let doorOpened = false;
+let curtainOpened = false;
 
-// Abrir porta ao clicar
-doorIntro.addEventListener('click', function() {
-    if (!doorOpened) {
-        openDoor();
-    }
-});
+function openCurtain() {
+    if (curtainOpened || !curtainIntro) return;
+    curtainOpened = true;
 
-// Também abrir ao pressionar qualquer tecla
-document.addEventListener('keydown', function(e) {
-    if (!doorOpened && doorIntro) {
-        openDoor();
-    }
-});
+    curtainIntro.classList.add('opening');
 
-function openDoor() {
-    if (doorOpened) return;
-    doorOpened = true;
-    
-    // Adicionar classe de abertura
-    doorIntro.classList.add('opening');
-    
-    // Após animação, esconder porta e mostrar conteúdo
     setTimeout(() => {
-        doorIntro.classList.add('hidden');
+        curtainIntro.classList.add('hidden');
         mainContent.style.display = 'block';
         mainContent.style.animation = 'fadeInUp 0.8s ease';
         mainContent.style.opacity = '0';
-        
-        // Fade in suave do conteúdo
+
         setTimeout(() => {
             mainContent.style.transition = 'opacity 0.8s ease';
             mainContent.style.opacity = '1';
+            document.body.classList.add('invite-revealed');
+            const balloons = document.getElementById('festaBalloons');
+            if (balloons) {
+                balloons.classList.add('festa-balloons--playing');
+                setTimeout(function() {
+                    balloons.classList.remove('festa-balloons--playing');
+                }, 11000);
+            }
         }, 50);
-        
-        // Mostrar menu hambúrguer após porta abrir
+
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        
         if (mobileMenuToggle) {
             setTimeout(() => {
                 mobileMenuToggle.classList.add('visible');
             }, 800);
         }
-        
-        // Scroll suave para o topo
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Remover porta do DOM após transição
+
         setTimeout(() => {
-            doorIntro.style.display = 'none';
-        }, 1200);
-    }, 1200);
+            curtainIntro.style.display = 'none';
+            handleInviteDeepLink();
+        }, 1100);
+    }, 1100);
 }
+
+/** Abre o painel certo quando o convite é aberto com #traje, #confirmar, #presentes ou #localizacao (ex.: link no PDF). */
+function handleInviteDeepLink() {
+    const raw = (window.location.hash || '').replace(/^#/, '').toLowerCase();
+    if (!raw) return;
+    const map = {
+        localizacao: 'locationIcon',
+        traje: 'dressIcon',
+        confirmar: 'rsvpIcon',
+        presentes: 'giftListIcon'
+    };
+    const iconId = map[raw];
+    if (!iconId) return;
+    const el = document.getElementById(iconId);
+    if (!el) return;
+    if (window.getComputedStyle(el).display === 'none') return;
+    el.click();
+}
+
+window.addEventListener('hashchange', function() {
+    if (curtainOpened) {
+        handleInviteDeepLink();
+    }
+});
+
+if (curtainIntro) {
+    curtainIntro.addEventListener('click', function() {
+        openCurtain();
+    });
+    curtainIntro.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openCurtain();
+        }
+    });
+}
+
+document.addEventListener('keydown', function() {
+    if (!curtainOpened && curtainIntro && curtainIntro.style.display !== 'none') {
+        openCurtain();
+    }
+});
 
 // Funções para os ícones interativos
 function toggleCard(card, otherCards) {
@@ -1368,7 +1488,7 @@ if (mobileMenuToggle && mobileMenu) {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Convite de casamento carregado!');
+    console.log('Convite de aniversário carregado!');
     
     // Inicializar elementos do formulário
     initializeFormElements();
@@ -1380,6 +1500,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupFormSubmit();
     
     await loadGuestListControl();
+    await loadInviteNavConfig();
     await loadGuestsFromFirestore();
     applyRsvpRegistrationLock();
     console.log('Convidados registrados:', guestsList.length);
@@ -1387,26 +1508,61 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!isFirebaseConfigured()) {
         console.warn('Firebase não configurado. Usando localStorage como fallback.');
     }
-    
-    // Adicionar animação suave ao scroll (apenas após porta abrir)
+
+    initInviteHeroParallax();
+
+    const scrollRevealObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                scrollRevealObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.12,
+        rootMargin: '0px 0px -32px 0px'
+    });
+
+    document.querySelectorAll('.invite-animate').forEach(function(el) {
+        scrollRevealObserver.observe(el);
+    });
+
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-    
+
     const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
+        entries.forEach(function(entry) {
             if (entry.isIntersecting) {
                 entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
             }
         });
     }, observerOptions);
-    
-    // Observar todas as seções (após porta abrir)
-    setTimeout(() => {
-        document.querySelectorAll('.detail-card, .rsvp-card-romantic').forEach(card => {
+
+    setTimeout(function() {
+        document.querySelectorAll('.detail-card, .rsvp-card-romantic').forEach(function(card) {
             card.style.opacity = '0';
             observer.observe(card);
         });
     }, 2000);
 });
+
+function initInviteHeroParallax() {
+    var hero = document.getElementById('inviteHero');
+    var deco = hero ? hero.querySelector('.invite-pastel-deco') : null;
+    if (!hero || !deco) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    hero.addEventListener('mousemove', function(e) {
+        if (!document.body.classList.contains('invite-revealed')) return;
+        var r = hero.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - 0.5;
+        var y = (e.clientY - r.top) / r.height - 0.5;
+        deco.style.transform = 'translate(' + (x * 12) + 'px, ' + (y * 10) + 'px)';
+    });
+
+    hero.addEventListener('mouseleave', function() {
+        deco.style.transform = '';
+    });
+}

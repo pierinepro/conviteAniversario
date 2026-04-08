@@ -1,0 +1,11 @@
+Coloque aqui PNGs exportados do Freepik (ou outro banco), com licença válida.
+
+No index.html, nos <img data-emoji-code="...">, adicione por exemplo:
+  data-sticker-src="images/stickers/localizacao.png"
+
+Ordem de carga no site: seu PNG → Fluent Emoji 3D (CDN) → Twemoji.
+
+Lista de sites úteis: STICKERS_FONTES.txt na raiz do projeto.
+
+Freepik (figurinhas aniversário):
+https://br.freepik.com/search?format=search&iconType=sticker&query=birthday&type=icon

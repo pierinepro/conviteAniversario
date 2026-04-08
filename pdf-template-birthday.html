@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- Referência visual / impressão no navegador. O botão "PDF do convite" no admin usa jsPDF em script-admin.js (não html2pdf). -->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF — Convite Giovanna</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #fff; }
+        #convite {
+            width: 800px;
+            height: 1131px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(165deg, #ffc9e0 0%, #ffd6ea 42%, #ffe8f2 100%);
+        }
+        .pdf-bg-stripes {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 1;
+            background-image:
+                repeating-linear-gradient(92deg, transparent, transparent 26px, rgba(255,255,255,0.08) 26px, rgba(255,255,255,0.08) 28px),
+                repeating-linear-gradient(-8deg, transparent, transparent 44px, rgba(248,187,208,0.14) 44px, rgba(248,187,208,0.14) 46px);
+        }
+        .pdf-inner {
+            position: relative;
+            z-index: 2;
+            padding: 48px 44px 36px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .pdf-kicker {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            font-size: 0.82rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #ff7043;
+            margin-bottom: 22px;
+            max-width: 520px;
+            line-height: 1.4;
+        }
+        .pdf-photo-wrap {
+            width: 200px;
+            height: 200px;
+            padding: 7px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #fff 0%, #fce4ec 50%, #fff 100%);
+            box-shadow: 0 10px 28px rgba(233, 30, 99, 0.2), 0 0 0 4px rgba(255,255,255,0.95);
+            margin-bottom: 16px;
+        }
+        .pdf-photo-wrap img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+        }
+        .pdf-name {
+            font-family: 'Pacifico', cursive;
+            font-size: 4.1rem;
+            color: #ec407a;
+            line-height: 1.05;
+            margin-bottom: 12px;
+            text-shadow: 2px 3px 0 rgba(255,255,255,0.5);
+        }
+        .pdf-age {
+            display: inline-block;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            background: linear-gradient(135deg, #26a69a, #4db6ac);
+            padding: 8px 28px;
+            border-radius: 999px;
+            box-shadow: 0 4px 0 #00796b;
+            margin-bottom: 18px;
+        }
+        .pdf-date {
+            font-weight: 800;
+            font-size: 1.05rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #00897b;
+            margin-bottom: 6px;
+        }
+        .pdf-time {
+            font-weight: 800;
+            font-size: 0.98rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #00897b;
+            margin-bottom: 20px;
+        }
+        .pdf-venue-name {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #ff7043;
+            margin-bottom: 8px;
+        }
+        .pdf-venue-addr {
+            font-weight: 700;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: #ff7043;
+            max-width: 420px;
+            margin-bottom: 28px;
+        }
+        .pdf-actions-title {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #880e4f;
+            margin-bottom: 14px;
+        }
+        .pdf-actions-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 14px;
+            width: 100%;
+            max-width: 720px;
+        }
+        a.pdf-interactive-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 158px;
+            min-height: 76px;
+            padding: 10px 8px;
+            text-decoration: none;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #fff 0%, #fce4ec 100%);
+            border: 2px solid rgba(236, 64, 122, 0.45);
+            box-shadow: 0 4px 14px rgba(194, 24, 94, 0.12);
+        }
+        a.pdf-interactive-link .emoji {
+            font-size: 1.75rem;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+        a.pdf-interactive-link .lbl {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #ad1457;
+            text-align: center;
+            line-height: 1.25;
+        }
+        .pdf-foot {
+            margin-top: auto;
+            padding-top: 16px;
+            font-size: 0.65rem;
+            color: #9e5678;
+            letter-spacing: 0.04em;
+            max-width: 520px;
+            line-height: 1.35;
+        }
+    </style>
+</head>
+<body>
+    <div id="convite">
+        <div class="pdf-bg-stripes" aria-hidden="true"></div>
+        <div class="pdf-inner">
+            <p class="pdf-kicker">Convidamos você para o aniversário</p>
+            <div class="pdf-photo-wrap">
+                <img src="images/aniversariante.png" alt="" crossorigin="anonymous">
+            </div>
+            <h1 class="pdf-name">Giovanna</h1>
+            <p class="pdf-age">1 ano</p>
+            <p class="pdf-date">03 | maio | 2026</p>
+            <p class="pdf-time">Das 13h às 17h</p>
+            <p class="pdf-venue-name">Buffet Criança Feliz</p>
+            <p class="pdf-venue-addr">R. da Mooca, 3314 - Mooca, São Paulo - SP, 03165-000</p>
+
+            <p class="pdf-actions-title">Toque ou clique (no PDF, use os links)</p>
+            <div class="pdf-actions-row">
+                <a class="pdf-interactive-link" href="https://www.google.com/maps/search/?api=1&amp;query=R.%20da%20Mooca%2C%203314%20-%20Mooca%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2003165-000">
+                    <span class="emoji" aria-hidden="true">📍</span>
+                    <span class="lbl">Localização<br>(mapa)</span>
+                </a>
+                <a class="pdf-interactive-link" href="__INVITE_BASE__#traje">
+                    <span class="emoji" aria-hidden="true">👕</span>
+                    <span class="lbl">Traje /<br>fantasia</span>
+                </a>
+                <a class="pdf-interactive-link" href="__INVITE_BASE__#confirmar">
+                    <span class="emoji" aria-hidden="true">✨</span>
+                    <span class="lbl">Confirmar<br>presença</span>
+                </a>
+                <a class="pdf-interactive-link" href="__INVITE_BASE__#presentes">
+                    <span class="emoji" aria-hidden="true">🎁</span>
+                    <span class="lbl">Lista de<br>presentes</span>
+                </a>
+            </div>
+            <p class="pdf-foot">Abra o convite online no celular ou computador para confirmar e ver detalhes. Os botões acima são links no PDF (funcionam na maioria dos leitores).</p>
+        </div>
+    </div>
+</body>
+</html>

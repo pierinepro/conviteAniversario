@@ -1,190 +1,114 @@
-# 💍 Sistema de Convites de Casamento
+# Convite de aniversário (site estático)
 
-Sistema web completo para gerenciamento de convites de casamento, permitindo que os convidados confirmem presença online e que os administradores gerenciem a lista de convidados de forma segura.
+Site de convite infantil com **RSVP** online, **painel admin** (Firebase Authentication), dados no **Firestore** e exportação para **Excel**. Pensado para hospedagem simples (por exemplo **Netlify**), sem build.
 
-## 📋 Sobre o Projeto
+## O que o projeto faz
 
-Este projeto foi desenvolvido para facilitar o gerenciamento de convites de casamento, oferecendo:
+**Convidados (`index.html`)**
 
-- **Página de convite elegante** com informações do evento
-- **Formulário de confirmação de presença** (RSVP) online
-- **Painel administrativo** para gerenciar convidados
-- **Armazenamento seguro** usando Firebase Firestore
-- **Exportação de dados** em formato Excel (.xlsx)
+- Página do evento (textos, data, local, traje, presentes conforme você configurar).
+- Confirmação de presença: vou / em dúvida / não vou, acompanhantes e campos configuráveis.
+- Cortina de abertura, animações e integração com Firestore (com fallback em `localStorage` se necessário).
 
-## ✨ Funcionalidades
+**Admin (`admin.html`)**
 
-### Para Convidados
-- Visualização da página de convite com informações do evento
-- Confirmação de presença com três opções:
-  - ✅ Vou comparecer
-  - ❓ Em dúvida
-  - ❌ Não vou comparecer
-- Cadastro de acompanhantes
-- Mensagens personalizadas para cada resposta
-- Formatação automática de e-mail e telefone
+- Login com **e-mail e senha** criados no Firebase (não há senha fixa no código).
+- Estatísticas, busca, edição, exclusão, limpeza da lista com confirmação e exportação `.xlsx`.
 
-### Para Administradores
-- **Autenticação segura** com login e senha
-- **Dashboard com estatísticas**:
-  - Total de pessoas confirmadas
-  - Total de pessoas em dúvida
-  - Total de pessoas que não comparecerão
-- **Busca de convidados** por nome, e-mail ou telefone
-- **Edição de dados** dos convidados e acompanhantes
-- **Exclusão individual** de convidados ou acompanhantes
-- **Limpeza completa** da lista (com validação de senha)
-- **Exportação para Excel** (.xlsx) com todos os dados
+## Tecnologias
 
-## 🛠️ Tecnologias Utilizadas
+- HTML, CSS, JavaScript (ES modules e imports dinâmicos do Firebase CDN).
+- **Firebase**: Firestore, Authentication (e-mail/senha); Analytics opcional na página do convite.
+- **SheetJS** no admin para Excel.
 
-- **HTML5** - Estrutura das páginas
-- **CSS3** - Estilização responsiva e moderna
-- **JavaScript (ES6+)** - Lógica e interatividade
-- **Firebase**:
-  - **Firestore** - Banco de dados NoSQL
-  - **Authentication** - Autenticação de administradores
-- **SheetJS (xlsx)** - Geração de arquivos Excel
-
-## 📁 Estrutura do Projeto
+## Estrutura principal
 
 ```
-convite/
-├── index.html              # Página principal do convite
-├── admin.html              # Painel administrativo
-├── script.js               # Lógica da página principal
-├── script-admin.js         # Lógica do painel admin
-├── style.css               # Estilos compartilhados
-├── config.js               # Configurações gerais
-├── firebase-config.js.example  # Exemplo de configuração Firebase
-├── FIREBASE_SETUP.md       # Guia de configuração do Firebase
-└── README.md              # Este arquivo
+conviteAniversario/
+├── index.html                 # Convite público
+├── admin.html                 # Painel administrativo
+├── script.js                  # Lógica do convite
+├── script-admin.js            # Lógica do admin
+├── style.css
+├── config.js                  # Legado / referência (login admin real é Firebase Auth)
+├── firebase-config.js.example # Exemplo se quiser externalizar config (opcional)
+├── pdf-template-birthday.html # Modelo usado na geração de PDF no admin
+├── images/                    # Fotos e assets do convite
+├── netlify.toml               # Publicação e headers no Netlify
+├── FIREBASE_SETUP.md          # Passo a passo Firebase (regras, domínios, credenciais)
+├── NETLIFY_DEPLOY.md          # Deploy (se usar Netlify)
+└── README.md
 ```
 
-## 🚀 Como Configurar
+## Configurar o Firebase
 
-### 1. Pré-requisitos
+1. Siga o guia **[FIREBASE_SETUP.md](FIREBASE_SETUP.md)** (projeto, Firestore, regras, Authentication, usuário admin).
+2. No Console, em **Configurações do projeto** → **Geral** → app **Web**, copie o objeto **`firebaseConfig`** (aba **Geral**, não “Contas de serviço”).
+3. Cole o **mesmo** `firebaseConfig` em **`index.html`** e **`admin.html`**, no `<script type="module">` do `<head>` (os dois precisam apontar para o mesmo projeto).
 
-- Conta no Firebase (gratuita)
-- Editor de código
-- Navegador moderno
-
-### 2. Configuração do Firebase
-
-1. Acesse o [Firebase Console](https://console.firebase.google.com/)
-2. Crie um novo projeto
-3. Ative o **Firestore Database** (modo de produção ou teste)
-4. Ative o **Authentication** (método Email/Password)
-5. Obtenha as credenciais do Firebase
-6. Configure as credenciais no arquivo `index.html`
-
-Para instruções detalhadas, consulte o arquivo [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
-
-### 3. Configuração de Credenciais
-
-Edite o arquivo `index.html` e substitua as credenciais do Firebase:
+Exemplo de formato (valores são os do seu app no Console):
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_AUTH_DOMAIN",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_STORAGE_BUCKET",
-  messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-  appId: "SEU_APP_ID"
+  apiKey: '...',
+  authDomain: '....firebaseapp.com',
+  projectId: '...',
+  storageBucket: '....firebasestorage.app',
+  messagingSenderId: '...',
+  appId: '...',
+  measurementId: 'G-...' // opcional (Analytics)
 };
 ```
 
-### 4. Configuração de Login Admin
+4. Em **Authentication** → **Settings** → **Authorized domains**, inclua o domínio do site publicado (por exemplo `*.netlify.app`).
 
-Edite o arquivo `script-admin.js` e configure as credenciais de administrador:
+**Admin:** crie o usuário em **Authentication** → **Users**. Não é necessário (nem recomendável) colocar e-mail/senha do admin em `script-admin.js`.
 
-```javascript
-const ADMIN_EMAIL = 'seu-email@exemplo.com';
-const ADMIN_PASSWORD = 'sua-senha-segura';
+## Rodar localmente
+
+Abra `index.html` com um servidor estático simples (o Firebase e os módulos ES costumam exigir `http://`, não `file://`). Por exemplo:
+
+```bash
+npx serve .
 ```
 
-**⚠️ Importante**: Crie o usuário admin no Firebase Authentication antes de usar o painel.
+Depois acesse a URL indicada no terminal e use `/admin.html` para o painel.
 
-## 📖 Como Usar
+## Publicar
 
-### Para Convidados
+- **Netlify:** pasta do projeto como site estático; veja [NETLIFY_DEPLOY.md](NETLIFY_DEPLOY.md) e `netlify.toml`.
+- Após o deploy, confira domínios autorizados no Firebase e as regras do Firestore.
 
-1. Acesse a página `index.html`
-2. Preencha o formulário com:
-   - Nome completo
-   - E-mail (obrigatório)
-   - Telefone (opcional)
-   - Status de presença
-   - Nome dos acompanhantes (se houver)
-3. Clique em "Confirmar"
-4. Receba a mensagem de confirmação
+## Dados no Firestore
 
-### Para Administradores
+- Coleção de convidados: padrão `guests` (alterável com `FIRESTORE_GUESTS_COLLECTION` em `script.js` e `script-admin.js` — alinhe as **regras** do Firestore se mudar o nome).
+- Documentos em `config/` guardam opções do painel (limite de acompanhantes, lista fechada, campos do formulário, visibilidade dos botões do convite, etc.).
 
-1. Acesse a página `admin.html`
-2. Faça login com e-mail e senha
-3. Visualize as estatísticas no dashboard
-4. Use as ferramentas disponíveis:
-   - **Buscar**: Encontre convidados específicos
-   - **Editar**: Modifique dados dos convidados
-   - **Excluir**: Remova convidados individuais
-   - **Exportar**: Baixe a lista completa em Excel
-   - **Limpar Lista**: Remova todos os convidados (com validação)
-
-## 🔒 Segurança
-
-- Autenticação obrigatória para acesso ao painel admin
-- Validação de senha para operações críticas (limpar lista)
-- Dados armazenados de forma segura no Firebase
-- Fallback para localStorage quando Firebase não estiver disponível
-
-## 📊 Estrutura de Dados
-
-Cada convidado é armazenado com a seguinte estrutura:
+Estrutura típica de um convidado (campos podem variar conforme configuração):
 
 ```javascript
 {
-  id: "ID_UNICO",
-  name: "Nome do Convidado",
-  email: "email@exemplo.com",
-  phone: "(00) 00000-0000",
-  attendance: "yes" | "maybe" | "no",
-  companions: ["Acompanhante 1", "Acompanhante 2"],
-  dateAdded: "Timestamp"
+  name: '...',
+  email: '...',
+  phone: '...',
+  attendance: 'yes' | 'maybe' | 'no',
+  companions: [],
+  dateAdded: Timestamp
 }
 ```
 
-## 🎨 Personalização
+## Personalização
 
-### Alterar Informações do Evento
+- Textos, data, local, links e seções: **`index.html`** (e imagens em **`images/`**).
+- Aparência: **`style.css`**.
+- PDF do convite: fluxo no admin usa **`pdf-template-birthday.html`** como base.
 
-Edite o arquivo `index.html` para personalizar:
-- Nomes dos noivos
-- Data do casamento
-- Local do evento
-- Mensagem bíblica
-- Código de vestimenta
+## Segurança (resumo)
 
-### Alterar Estilos
+- Painel protegido por Firebase Authentication.
+- Operações sensíveis no admin pedem confirmação (ex.: limpar lista).
+- Regras do Firestore devem refletir o que você aceita para convidados públicos vs. config; detalhes em **FIREBASE_SETUP.md**.
 
-Edite o arquivo `style.css` para personalizar:
-- Cores
-- Fontes
-- Layout
-- Animações
+## Licença e uso
 
-## 📝 Licença
-
-Este projeto foi desenvolvido para uso pessoal/familiar.
-
-## 👨‍💻 Desenvolvido com ❤️
-
-Sistema desenvolvido especialmente para o casamento dos meus tios.
-
----
-
-**Data do Evento**: 28/02/2026  
-**Vestimenta**: Esporte Chique
-
-> "Acima de tudo, porém, revistam-se do amor, que é o elo perfeito." - Colossenses 3:14
+Uso pessoal/familiar. Adapte textos e credenciais conforme o seu evento.

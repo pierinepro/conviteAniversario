@@ -1,0 +1,31 @@
+Onde buscar ícones, figurinhas e GIFs mais bonitos (sempre leia a licença)
+
+ÍCONES / STICKERS ESTÁTICOS (PNG, SVG)
+- Microsoft Fluent Emoji (3D) — open source, já usado no site via CDN:
+  https://github.com/microsoft/fluentui-emoji
+  Mapa unicode → arquivo: https://github.com/shuding/fluentui-emoji-unicode
+- Twemoji — flat, CC-BY 4.0: https://twemoji.twitter.com/
+- OpenMoji — estilo uniforme, CC BY-SA 4.0: https://openmoji.org/
+- Google Noto Emoji — Apache 2.0: https://fonts.google.com/noto/specimen/Noto+Emoji
+- Phosphor / Lucide / Heroicons — linha fina “moderna”, não são figurinhas:
+  https://phosphoricons.com/ | https://lucide.dev/
+
+ILUSTRAÇÕES E STICKERS COMERCIAIS
+- Freepik / Flaticon — filtros “sticker” e “aniversário”; atribuição ou Premium:
+  https://br.freepik.com/
+- Storyset (Freepik) — personagens e cenas editáveis
+- unDraw / Humaaans — ilustrações simples para hero
+
+ANIMAÇÕES (não estão ligadas no convite por padrão)
+- LottieFiles — JSON + biblioteca lottie-web (leve, escalável):
+  https://lottiefiles.com/
+- Microsoft fluentui-emoji-animated — APNG, repo grande (Git LFS):
+  https://github.com/microsoft/fluentui-emoji-animated
+
+GIFs
+- Tenor (Google) e Giphy — APIs e termos de uso para incorporação em sites
+- Prefira WebP animado ou Lottie para performance em páginas rápidas
+
+SUBSTITUIR NO SEU CONVITE
+- PNG local: images/stickers/ + data-sticker-src no <img data-emoji-code="…">
+- Detalhes: images/stickers/LEIA-ME.txt

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!-- PDF do convite — gerado pelo admin via html2pdf. Unicórnio: figuras/unicornio.png -->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convite Giovanna - 1 Ano</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&amp;family=Montserrat:wght@300;600&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink-light: #fce4ec;
+            --pink-main: #f06292;
+            --gold: #d4af37;
+            --purple: #ba68c8;
+        }
+
+        /* body mínimo — o flex fica só no wrapper (evita estilizar o body real da página admin no PDF). */
+        body {
+            margin: 0;
+        }
+
+        .invite-pdf-root {
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 540px;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff5f8;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 500px;
+            background: linear-gradient(135deg, #fff5f8 0%, #ffe0f0 100%);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #fff5f8;
+            box-sizing: border-box;
+            text-align: center;
+            padding-bottom: 30px;
+        }
+
+        /* Estrelas e brilhos de fundo (atrás do conteúdo) */
+        .invite-bg-stars {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .invite-bg-stars span {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 11px;
+            line-height: 1;
+            text-shadow: 0 0 6px rgba(255, 182, 193, 0.85);
+            font-family: system-ui, sans-serif;
+        }
+
+        .invite-bg-stars .star-lg {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .invite-bg-stars .star-gold {
+            color: rgba(200, 165, 50, 0.72);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .invite-bg-stars .star-xs {
+            font-size: 8px;
+            opacity: 0.85;
+        }
+
+        .invite-bg-stars .star-md {
+            font-size: 13px;
+        }
+
+        .photo-container {
+            margin-top: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .photo-container img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            object-fit: cover;
+        }
+
+        .unicorn-img {
+            width: 180px;
+            margin: 20px auto;
+            display: block;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4rem;
+            color: var(--pink-main);
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            color: #888;
+            text-transform: uppercase;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .venue-line {
+            font-size: 0.95rem;
+            color: var(--purple);
+            font-weight: 600;
+            margin: 8px 20px 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.6);
+            margin: 20px 30px;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px dashed var(--pink-main);
+            position: relative;
+            z-index: 2;
+        }
+
+        .date {
+            font-size: 1.5rem;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .address {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .pdf-links {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px 20px;
+        }
+
+        .map-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--pink-main);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.8rem;
+            font-family: 'Montserrat', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+        }
+
+        /* Emoji renderiza de forma consistente no PDF (html2canvas costuma falhar com SVG pequeno). */
+        .map-link__icon {
+            font-size: 1.85rem;
+            line-height: 1;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+
+        .map-link--icon-only {
+            min-width: 48px;
+            min-height: 48px;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(240, 98, 146, 0.35);
+        }
+
+        @media print {
+            .invite-pdf-root { background: #fff5f8; padding: 12px; }
+            .card { box-shadow: none; border-color: #fff5f8; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invite-pdf-root" id="invitePdfCaptureRoot">
+    <div class="card" id="invitePdfCard">
+        <div class="invite-bg-stars" aria-hidden="true">
+            <span class="star-lg star-gold" style="left:5%;top:6%;">✦</span>
+            <span class="star-gold star-xs" style="left:14%;top:14%;">★</span>
+            <span class="star-md" style="left:22%;top:8%;">✧</span>
+            <span class="star-gold" style="left:30%;top:5%;">✦</span>
+            <span class="star-xs" style="left:38%;top:12%;">✧</span>
+            <span class="star-gold star-md" style="left:46%;top:7%;">★</span>
+            <span style="left:54%;top:11%;">✦</span>
+            <span class="star-gold star-xs" style="left:62%;top:4%;">✧</span>
+            <span class="star-md" style="left:70%;top:9%;">★</span>
+            <span class="star-gold" style="left:78%;top:6%;">✦</span>
+            <span class="star-xs" style="left:86%;top:13%;">✧</span>
+            <span class="star-lg star-gold" style="left:93%;top:8%;">★</span>
+            <span class="star-gold star-xs" style="left:8%;top:22%;">✧</span>
+            <span class="star-md" style="left:18%;top:28%;">✦</span>
+            <span class="star-gold" style="left:28%;top:24%;">★</span>
+            <span style="left:42%;top:20%;">✧</span>
+            <span class="star-gold star-md" style="left:52%;top:26%;">✦</span>
+            <span class="star-xs" style="left:66%;top:22%;">★</span>
+            <span class="star-gold" style="left:76%;top:28%;">✧</span>
+            <span class="star-md" style="left:88%;top:24%;">✦</span>
+            <span class="star-gold star-xs" style="left:4%;top:42%;">★</span>
+            <span style="left:12%;top:38%;">✦</span>
+            <span class="star-gold" style="left:24%;top:44%;">✧</span>
+            <span class="star-lg" style="left:36%;top:36%;">★</span>
+            <span class="star-gold star-md" style="left:48%;top:42%;">✦</span>
+            <span class="star-xs" style="left:58%;top:38%;">✧</span>
+            <span class="star-gold" style="left:68%;top:46%;">★</span>
+            <span style="left:80%;top:40%;">✦</span>
+            <span class="star-gold star-xs" style="left:92%;top:44%;">✧</span>
+            <span class="star-md" style="left:10%;top:54%;">★</span>
+            <span class="star-gold" style="left:20%;top:58%;">✦</span>
+            <span class="star-xs" style="left:32%;top:52%;">✧</span>
+            <span class="star-gold star-lg" style="left:44%;top:56%;">★</span>
+            <span style="left:56%;top:50%;">✦</span>
+            <span class="star-gold star-md" style="left:66%;top:58%;">✧</span>
+            <span class="star-xs" style="left:78%;top:54%;">★</span>
+            <span class="star-gold" style="left:88%;top:60%;">✦</span>
+            <span class="star-md" style="left:6%;top:68%;">✧</span>
+            <span class="star-gold star-xs" style="left:16%;top:74%;">★</span>
+            <span style="left:28%;top:70%;">✦</span>
+            <span class="star-gold" style="left:38%;top:78%;">✧</span>
+            <span class="star-lg star-gold" style="left:50%;top:72%;">★</span>
+            <span class="star-xs" style="left:60%;top:68%;">✦</span>
+            <span class="star-gold star-md" style="left:72%;top:76%;">✧</span>
+            <span style="left:84%;top:70%;">★</span>
+            <span class="star-gold star-xs" style="left:94%;top:78%;">✦</span>
+            <span class="star-md" style="left:14%;top:86%;">✧</span>
+            <span class="star-gold" style="left:26%;top:90%;">★</span>
+            <span class="star-xs" style="left:40%;top:84%;">✦</span>
+            <span class="star-gold" style="left:52%;top:92%;">✧</span>
+            <span class="star-lg" style="left:64%;top:88%;">★</span>
+            <span class="star-gold star-md" style="left:76%;top:94%;">✦</span>
+            <span style="left:88%;top:86%;">✧</span>
+            <span class="star-gold star-xs" style="left:48%;top:62%;">★</span>
+            <span class="star-md" style="left:2%;top:32%;">✦</span>
+            <span class="star-gold" style="left:96%;top:52%;">★</span>
+        </div>
+        <div class="photo-container">
+            <img src="images/aniversariante.png" alt="Giovanna" crossorigin="anonymous">
+        </div>
+
+        <img src="figuras/unicornio.png" class="unicorn-img" alt="" width="180" height="180" crossorigin="anonymous">
+
+        <h1>Giovanna</h1>
+        <div class="subtitle">Festa de 1 Ano</div>
+        <p class="venue-line">Buffet Infantil Aventura e Diversão</p>
+
+        <div class="info-section">
+            <div class="date">
+                <strong>03 de Maio de 2026</strong> — 13h às 17h
+            </div>
+            <div class="address">
+                R. da Mooca, 3314 – Mooca<br>
+                São Paulo, SP | 03165-000
+            </div>
+            <div class="pdf-links">
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=R.%20da%20Mooca%2C%203314%20-%20Mooca%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2003165-000" class="map-link map-link--icon-only" target="_blank" rel="noopener" aria-label="Ver no Google Maps">
+                    <span class="map-link__icon" aria-hidden="true">📍</span>
+                </a>
+                <a href="__INVITE_BASE__#confirmar" class="map-link map-link--icon-only" aria-label="Confirmar presença">
+                    <span class="map-link__icon" aria-hidden="true">✉️</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    </div>
+
+</body>
+</html>
